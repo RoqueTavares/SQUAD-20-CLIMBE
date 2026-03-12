@@ -28,6 +28,24 @@ public class UserService {
         return toDTO(user);
     }
 
+    public UserDTO buscarPorEmail(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado com e-mail: " + email));
+        return toDTO(user);
+    }
+
+    public UserDTO buscarPorCpf(String cpf) {
+        User user = userRepository.findByCpf(cpf)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado com CPF: " + cpf));
+        return toDTO(user);
+    }
+
+    public List<UserDTO> buscarPorCargo(Long cargoId) {
+        return userRepository.findByCargo_Id(cargoId).stream()
+                .map(this::toDTO)
+                .toList();
+    }
+
     public UserDTO salvar(UserDTO dto) {
         validarUnicidadeEmailCpf(dto.getEmail(), dto.getCpf(), null);
         Cargo cargo = buscarCargo(dto.getCargoId());

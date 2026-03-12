@@ -27,6 +27,21 @@ public class UserController {
         return ResponseEntity.ok(userService.buscarPorId(id));
     }
 
+    @GetMapping("/email/{email}")
+    public ResponseEntity<UserDTO> buscarPorEmail(@PathVariable String email) {
+        return ResponseEntity.ok(userService.buscarPorEmail(email));
+    }
+
+    @GetMapping("/cpf/{cpf}")
+    public ResponseEntity<UserDTO> buscarPorCpf(@PathVariable String cpf) {
+        return ResponseEntity.ok(userService.buscarPorCpf(cpf));
+    }
+
+    @GetMapping("/cargo/{cargoId}")
+    public ResponseEntity<List<UserDTO>> buscarPorCargo(@PathVariable Long cargoId) {
+        return ResponseEntity.ok(userService.buscarPorCargo(cargoId));
+    }
+
     @PostMapping
     public ResponseEntity<UserDTO> salvar(@RequestBody UserDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(userService.salvar(dto));
