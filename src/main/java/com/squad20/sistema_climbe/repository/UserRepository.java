@@ -11,5 +11,6 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 
     Optional<User> findByEmail(String email);
     Optional <User> findByCpf(String cpf);
-    List<User> findByCargo(String cargo);
+    //mudar quando adicionar a classe cargo
+    List<User> findByCargoId(String cargo);
 }
