@@ -1,18 +1,15 @@
 package com.squad20.sistema_climbe.service;
 
 import com.squad20.sistema_climbe.entity.User;
-import com.squad20.sistema_climbe.entityDTO.UserDTO;
+import com.squad20.sistema_climbe.dto.UserDTO;
 import com.squad20.sistema_climbe.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.swing.text.html.Option;
 import java.util.List;
 import java.util.Optional;
-
-import static java.util.stream.Collectors.toList;
 
 @Service
 @RequiredArgsConstructor
@@ -38,10 +35,10 @@ public class UserService {
         UserDTO userDTO = new UserDTO();
         if (user.isPresent()) {
             userDTO.setId(user.get().getId());
-            userDTO.setNome_completo(user.get().getNome_completo());
+            userDTO.setNomeCompleto(user.get().getNomeCompleto());
             userDTO.setEmail(user.get().getEmail());
             userDTO.setCpf(user.get().getCpf());
-            userDTO.setCargo(user.get().getCargo());
+            userDTO.setCargo(user.get().getCargoId());
         }else{
             throw new EmptyResultDataAccessException(1);
         }
@@ -55,10 +52,10 @@ public class UserService {
         UserDTO userDTO = new UserDTO();
         if (user.isPresent()) {
             userDTO.setId(user.get().getId());
-            userDTO.setNome_completo(user.get().getNome_completo());
+            userDTO.setNomeCompleto(user.get().getNomeCompleto());
             userDTO.setEmail(user.get().getEmail());
             userDTO.setCpf(user.get().getCpf());
-            userDTO.setCargo(user.get().getCargo());
+            userDTO.setCargo(user.get().getCargoId());
         }else{
             throw new EmptyResultDataAccessException(1);
         }
@@ -73,10 +70,10 @@ public class UserService {
 
         if (user.isPresent()) {
             userDTO.setId(user.get().getId());
-            userDTO.setNome_completo(user.get().getNome_completo());
+            userDTO.setNomeCompleto(user.get().getNomeCompleto());
             userDTO.setEmail(user.get().getEmail());
             userDTO.setCpf(user.get().getCpf());
-            userDTO.setCargo(user.get().getCargo());
+            userDTO.setCargo(user.get().getCargoId());
 
         }else {
             throw new EmptyResultDataAccessException(1);
@@ -93,6 +90,15 @@ public class UserService {
 
     @Transactional
     public User save(User user) {
+
+        if(userRepository.findByCpf(user.getCpf()).isPresent() ){
+            throw new RuntimeException("User cpf already exists");
+        }
+
+        if(userRepository.findByEmail(user.getEmail()).isPresent()){
+            throw new RuntimeException("User email already exists");
+        }
+
         return userRepository.save(user);
     }
 
@@ -103,10 +109,10 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado com o ID: " + id));
 
 
-        userManaged.setNome_completo(user.getNome_completo());
+        userManaged.setNomeCompleto(user.getNomeCompleto());
         userManaged.setEmail(user.getEmail());
         userManaged.setCpf(user.getCpf());
-        userManaged.setCargo(user.getCargo());
+        userManaged.setCargoId(user.getCargoId());
 
 
         return userRepository.save(userManaged);
