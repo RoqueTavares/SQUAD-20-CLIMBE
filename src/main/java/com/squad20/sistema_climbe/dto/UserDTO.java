@@ -1,4 +1,4 @@
-package com.squad20.sistema_climbe.entityDTO;
+package com.squad20.sistema_climbe.dto;
 
 import com.squad20.sistema_climbe.entity.User;
 import lombok.Data;
@@ -7,7 +7,7 @@ import lombok.Data;
 public class UserDTO {
 
     private int id;
-    private String nome_completo;
+    private String nomeCompleto;
     private String cargo;
     private String cpf;
     private String email;
@@ -18,8 +18,8 @@ public class UserDTO {
 
     public UserDTO(User user) {
         this.id = user.getId();
-        this.nome_completo = user.getNome_completo();
-        this.cargo = user.getCargo();
+        this.nomeCompleto = user.getNomeCompleto();
+        this.cargo = user.getCargoId();
         this.cpf = user.getCpf();
         this.email = user.getEmail();
         this.contato = user.getContato();
