@@ -83,7 +83,7 @@ public class UserService {
     }
 
     public List<UserDTO> findByCargo(String cargo) {
-        return userRepository.findByCargo(cargo).stream()
+        return userRepository.findByCargoId(cargo).stream()
                 .map(UserDTO::new)
                 .toList();
     }
