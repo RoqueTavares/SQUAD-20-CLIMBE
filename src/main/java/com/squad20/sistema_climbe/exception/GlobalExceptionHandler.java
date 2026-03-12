@@ -1,4 +1,4 @@
-package com.squad20.sistema_climbe.controller.exception;
+package com.squad20.sistema_climbe.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
