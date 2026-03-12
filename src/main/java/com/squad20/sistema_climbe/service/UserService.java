@@ -90,6 +90,15 @@ public class UserService {
 
     @Transactional
     public User save(User user) {
+
+        if(userRepository.findByCpf(user.getCpf()).isPresent() ){
+            throw new RuntimeException("User cpf already exists");
+        }
+
+        if(userRepository.findByEmail(user.getEmail()).isPresent()){
+            throw new RuntimeException("User email already exists");
+        }
+
         return userRepository.save(user);
     }
 
