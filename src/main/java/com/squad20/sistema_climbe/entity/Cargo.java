@@ -18,5 +18,5 @@ public class Cargo {
     private Long id;
 
     @Column(name = "nome_cargo", nullable = false, length = 255)
-    private String nome;
+    private String name;
 }

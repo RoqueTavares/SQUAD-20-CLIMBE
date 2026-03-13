@@ -14,51 +14,51 @@ public class CargoService {
 
     private final CargoRepository cargoRepository;
 
-    public List<CargoDTO> listarTodos() {
+    public List<CargoDTO> findAll() {
         return cargoRepository.findAll().stream()
                 .map(this::toDTO)
                 .toList();
     }
 
-    public CargoDTO buscarPorId(Long id) {
-        Cargo cargo = buscarCargo(id);
-        return toDTO(cargo);
+    public CargoDTO findById(Long id) {
+        Cargo role = findRoleOrThrow(id);
+        return toDTO(role);
     }
 
-    public CargoDTO salvar(CargoDTO dto) {
-        Cargo cargo = toEntity(dto);
-        cargo = cargoRepository.save(cargo);
-        return toDTO(cargo);
+    public CargoDTO save(CargoDTO dto) {
+        Cargo role = toEntity(dto);
+        role = cargoRepository.save(role);
+        return toDTO(role);
     }
 
-    public CargoDTO atualizar(Long id, CargoDTO dto) {
-        Cargo cargo = buscarCargo(id);
-        cargo.setNome(dto.getNome());
-        cargo = cargoRepository.save(cargo);
-        return toDTO(cargo);
+    public CargoDTO update(Long id, CargoDTO dto) {
+        Cargo role = findRoleOrThrow(id);
+        role.setName(dto.getName());
+        role = cargoRepository.save(role);
+        return toDTO(role);
     }
 
-    public void excluir(Long id) {
-        Cargo cargo = buscarCargo(id);
-        cargoRepository.delete(cargo);
+    public void delete(Long id) {
+        Cargo role = findRoleOrThrow(id);
+        cargoRepository.delete(role);
     }
 
-    private Cargo buscarCargo(Long id) {
+    private Cargo findRoleOrThrow(Long id) {
         return cargoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Cargo não encontrado com id: " + id));
     }
 
-    private CargoDTO toDTO(Cargo cargo) {
+    private CargoDTO toDTO(Cargo role) {
         return CargoDTO.builder()
-                .id(cargo.getId())
-                .nome(cargo.getNome())
+                .id(role.getId())
+                .name(role.getName())
                 .build();
     }
 
     private Cargo toEntity(CargoDTO dto) {
         return Cargo.builder()
                 .id(dto.getId())
-                .nome(dto.getNome())
+                .name(dto.getName())
                 .build();
     }
 }

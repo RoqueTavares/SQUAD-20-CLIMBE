@@ -10,11 +10,11 @@ import lombok.*;
 public class UserDTO {
 
     private Long id;
-    private String nomeCompleto;
-    private Long cargoId;
-    private String cargoNome;
+    private String fullName;
+    private Long roleId;
+    private String roleName;
     private String cpf;
     private String email;
-    private String contato;
-    private String situacao;
+    private String phone;
+    private String status;
 }

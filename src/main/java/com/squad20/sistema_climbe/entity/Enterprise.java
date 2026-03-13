@@ -15,18 +15,43 @@ public class Enterprise implements Serializable {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private int id;
 
-    private String razao_social;
-    private String nome_fantasia;
+    @Column(name = "razao_social")
+    private String legalName;
+
+    @Column(name = "nome_fantasia")
+    private String tradeName;
+
     private String cnpj;
-    private String logradouro;
-    private int numero;
-    private String bairro;
-    private String cidade;
-    private String uf;
-    private String cep;
-    private String telefone;
+
+    @Column(name = "logradouro")
+    private String street;
+
+    @Column(name = "numero")
+    private int number;
+
+    @Column(name = "bairro")
+    private String neighborhood;
+
+    @Column(name = "cidade")
+    private String city;
+
+    @Column(name = "uf")
+    private String state;
+
+    @Column(name = "cep")
+    private String zipCode;
+
+    @Column(name = "telefone")
+    private String phone;
+
     private String email;
-    private String representante_nome;
-    private String representante_cnpj;
-    private String representante_contato;
+
+    @Column(name = "representante_nome")
+    private String representativeName;
+
+    @Column(name = "representante_cnpj")
+    private String representativeCpf;
+
+    @Column(name = "representante_contato")
+    private String representativePhone;
 }

@@ -18,11 +18,11 @@ public class User {
     private Long id;
 
     @Column(name = "nome_completo", nullable = false, length = 255)
-    private String nomeCompleto;
+    private String fullName;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cargo_id", nullable = false)
-    private Cargo cargo;
+    private Cargo role;
 
     @Column(nullable = false, length = 14)
     private String cpf;
@@ -31,11 +31,11 @@ public class User {
     private String email;
 
     @Column(length = 50)
-    private String contato;
+    private String phone;
 
     @Column(length = 255)
-    private String situacao;
+    private String status;
 
     @Column(name = "senha_hash", length = 60)
-    private String senhaHash;
+    private String passwordHash;
 }

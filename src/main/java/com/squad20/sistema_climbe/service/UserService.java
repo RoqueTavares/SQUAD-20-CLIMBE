@@ -17,115 +17,115 @@ public class UserService {
     private final UserRepository userRepository;
     private final CargoRepository cargoRepository;
 
-    public List<UserDTO> listarTodos() {
+    public List<UserDTO> findAll() {
         return userRepository.findAll().stream()
                 .map(this::toDTO)
                 .toList();
     }
 
-    public UserDTO buscarPorId(Long id) {
-        User user = buscarUsuario(id);
+    public UserDTO findById(Long id) {
+        User user = findUserOrThrow(id);
         return toDTO(user);
     }
 
-    public UserDTO buscarPorEmail(String email) {
+    public UserDTO findByEmail(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado com e-mail: " + email));
         return toDTO(user);
     }
 
-    public UserDTO buscarPorCpf(String cpf) {
+    public UserDTO findByCpf(String cpf) {
         User user = userRepository.findByCpf(cpf)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado com CPF: " + cpf));
         return toDTO(user);
     }
 
-    public List<UserDTO> buscarPorCargo(Long cargoId) {
-        return userRepository.findByCargo_Id(cargoId).stream()
+    public List<UserDTO> findByRoleId(Long roleId) {
+        return userRepository.findByRole_Id(roleId).stream()
                 .map(this::toDTO)
                 .toList();
     }
 
-    public UserDTO salvar(UserDTO dto) {
-        validarUnicidadeEmailCpf(dto.getEmail(), dto.getCpf(), null);
-        Cargo cargo = buscarCargo(dto.getCargoId());
-        User user = toEntity(dto, cargo);
+    public UserDTO save(UserDTO dto) {
+        validateEmailCpfUnique(dto.getEmail(), dto.getCpf(), null);
+        Cargo role = findRoleOrThrow(dto.getRoleId());
+        User user = toEntity(dto, role);
         user = userRepository.save(user);
         return toDTO(user);
     }
 
-    public UserDTO atualizar(Long id, UserDTO dto) {
-        User user = buscarUsuario(id);
-        validarUnicidadeEmailCpf(dto.getEmail(), dto.getCpf(), id);
-        Cargo cargo = buscarCargo(dto.getCargoId());
-        user.setNomeCompleto(dto.getNomeCompleto());
-        user.setCargo(cargo);
+    public UserDTO update(Long id, UserDTO dto) {
+        User user = findUserOrThrow(id);
+        validateEmailCpfUnique(dto.getEmail(), dto.getCpf(), id);
+        Cargo role = findRoleOrThrow(dto.getRoleId());
+        user.setFullName(dto.getFullName());
+        user.setRole(role);
         user.setCpf(dto.getCpf());
         user.setEmail(dto.getEmail());
-        user.setContato(dto.getContato());
-        user.setSituacao(dto.getSituacao());
+        user.setPhone(dto.getPhone());
+        user.setStatus(dto.getStatus());
         user = userRepository.save(user);
         return toDTO(user);
     }
 
-    public void excluir(Long id) {
-        User user = buscarUsuario(id);
+    public void delete(Long id) {
+        User user = findUserOrThrow(id);
         userRepository.delete(user);
     }
 
-    private User buscarUsuario(Long id) {
+    private User findUserOrThrow(Long id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado com id: " + id));
     }
 
-    private Cargo buscarCargo(Long id) {
+    private Cargo findRoleOrThrow(Long id) {
         return cargoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Cargo não encontrado com id: " + id));
     }
 
-    private void validarUnicidadeEmailCpf(String email, String cpf, Long idUsuarioIgnorar) {
-        if (emailEmUsoPorOutro(email, idUsuarioIgnorar)) {
+    private void validateEmailCpfUnique(String email, String cpf, Long excludeUserId) {
+        if (isEmailUsedByOther(email, excludeUserId)) {
             throw new RuntimeException("Já existe usuário cadastrado com este e-mail");
         }
-        if (cpfEmUsoPorOutro(cpf, idUsuarioIgnorar)) {
+        if (isCpfUsedByOther(cpf, excludeUserId)) {
             throw new RuntimeException("Já existe usuário cadastrado com este CPF");
         }
     }
 
-    private boolean emailEmUsoPorOutro(String email, Long idIgnorar) {
+    private boolean isEmailUsedByOther(String email, Long excludeUserId) {
         return userRepository.findByEmail(email)
-                .map(u -> !u.getId().equals(idIgnorar))
+                .map(u -> !u.getId().equals(excludeUserId))
                 .orElse(false);
     }
 
-    private boolean cpfEmUsoPorOutro(String cpf, Long idIgnorar) {
+    private boolean isCpfUsedByOther(String cpf, Long excludeUserId) {
         return userRepository.findByCpf(cpf)
-                .map(u -> !u.getId().equals(idIgnorar))
+                .map(u -> !u.getId().equals(excludeUserId))
                 .orElse(false);
     }
 
     private UserDTO toDTO(User user) {
         return UserDTO.builder()
                 .id(user.getId())
-                .nomeCompleto(user.getNomeCompleto())
-                .cargoId(user.getCargo().getId())
-                .cargoNome(user.getCargo().getNome())
+                .fullName(user.getFullName())
+                .roleId(user.getRole().getId())
+                .roleName(user.getRole().getName())
                 .cpf(user.getCpf())
                 .email(user.getEmail())
-                .contato(user.getContato())
-                .situacao(user.getSituacao())
+                .phone(user.getPhone())
+                .status(user.getStatus())
                 .build();
     }
 
-    private User toEntity(UserDTO dto, Cargo cargo) {
+    private User toEntity(UserDTO dto, Cargo role) {
         return User.builder()
-                .nomeCompleto(dto.getNomeCompleto())
-                .cargo(cargo)
+                .fullName(dto.getFullName())
+                .role(role)
                 .cpf(dto.getCpf())
                 .email(dto.getEmail())
-                .contato(dto.getContato())
-                .situacao(dto.getSituacao())
-                .senhaHash(null)
+                .phone(dto.getPhone())
+                .status(dto.getStatus())
+                .passwordHash(null)
                 .build();
     }
 }

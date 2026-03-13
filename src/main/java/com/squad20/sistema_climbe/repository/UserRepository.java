@@ -16,5 +16,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByCpf(String cpf);
 
-    List<User> findByCargo_Id(Long cargoId);
+    List<User> findByRole_Id(Long roleId);
 }

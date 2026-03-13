@@ -10,5 +10,5 @@ import lombok.*;
 public class CargoDTO {
 
     private Long id;
-    private String nome;
+    private String name;
 }

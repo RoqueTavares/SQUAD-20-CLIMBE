@@ -1,4 +1,4 @@
-package com.squad20.sistema_climbe.dto;
+package com.squad20.sistema_climbe.entityDTO;
 
 import com.squad20.sistema_climbe.entity.Enterprise;
 import lombok.Data;
