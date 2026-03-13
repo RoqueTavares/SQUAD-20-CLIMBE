@@ -1,7 +1,6 @@
 package com.squad20.sistema_climbe.controller;
 
-import com.squad20.sistema_climbe.entity.Enterprise;
-import com.squad20.sistema_climbe.dto.EnterpriseDTO;
+import com.squad20.sistema_climbe.entityDTO.EnterpriseDTO;
 import com.squad20.sistema_climbe.service.EnterpriseService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -31,7 +30,7 @@ public class EnterpriseController {
     @Operation(summary = "Buscar por ID", description = "Retorna uma empresa pelo identificador")
     @GetMapping("/{id}")
     public ResponseEntity<EnterpriseDTO> findById(
-            @Parameter(description = "ID da empresa") @PathVariable int id) {
+            @Parameter(description = "ID da empresa") @PathVariable Long id) {
         return ResponseEntity.ok(enterpriseService.findById(id));
     }
 
@@ -51,17 +50,17 @@ public class EnterpriseController {
 
     @Operation(summary = "Criar empresa", description = "Cadastra uma nova empresa")
     @PostMapping
-    public ResponseEntity<Enterprise> save(@RequestBody Enterprise enterprise) {
-        Enterprise saved = enterpriseService.save(enterprise);
+    public ResponseEntity<EnterpriseDTO> save(@RequestBody EnterpriseDTO dto) {
+        EnterpriseDTO saved = enterpriseService.save(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
     @Operation(summary = "Atualizar empresa", description = "Atualiza uma empresa existente (parcial)")
     @PatchMapping("/{id}")
-    public ResponseEntity<Enterprise> update(
-            @Parameter(description = "ID da empresa") @PathVariable int id,
-            @RequestBody Enterprise enterprise) {
-        Enterprise updated = enterpriseService.update(id, enterprise);
+    public ResponseEntity<EnterpriseDTO> update(
+            @Parameter(description = "ID da empresa") @PathVariable Long id,
+            @RequestBody EnterpriseDTO dto) {
+        EnterpriseDTO updated = enterpriseService.update(id, dto);
         return ResponseEntity.ok(updated);
     }
 }

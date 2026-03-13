@@ -6,12 +6,12 @@ import lombok.Data;
 @Data
 public class EnterpriseDTO {
 
-    private int id;
+    private Long id;
     private String legalName;
     private String tradeName;
     private String cnpj;
     private String street;
-    private int number;
+    private String number;
     private String neighborhood;
     private String city;
     private String state;

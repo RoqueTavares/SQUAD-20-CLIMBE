@@ -3,6 +3,8 @@ package com.squad20.sistema_climbe.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.Set;
+
 @Entity
 @Table(name = "usuarios")
 @Getter
@@ -30,12 +32,21 @@ public class User {
     @Column(nullable = false, length = 255)
     private String email;
 
-    @Column(length = 50)
+    @Column(name = "contato", length = 50)
     private String phone;
 
-    @Column(length = 255)
+    @Column(name = "situacao", length = 255)
     private String status;
 
     @Column(name = "senha_hash", length = 60)
     private String passwordHash;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "usuario_permissoes",
+            joinColumns = @JoinColumn(name = "id_usuario"),
+            inverseJoinColumns = @JoinColumn(name = "id_permissao")
+    )
+    private Set<Permission> permissions;
 }
+
