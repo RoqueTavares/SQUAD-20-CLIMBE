@@ -1,121 +1,131 @@
 package com.squad20.sistema_climbe.service;
 
+import com.squad20.sistema_climbe.entity.Cargo;
 import com.squad20.sistema_climbe.entity.User;
-import com.squad20.sistema_climbe.dto.UserDTO;
+import com.squad20.sistema_climbe.entityDTO.UserDTO;
+import com.squad20.sistema_climbe.repository.CargoRepository;
 import com.squad20.sistema_climbe.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
 
     private final UserRepository userRepository;
+    private final CargoRepository cargoRepository;
 
     public List<UserDTO> findAll() {
-        List<UserDTO> users = userRepository.findAll().stream()
-                .map(user -> new UserDTO(user))
+        return userRepository.findAll().stream()
+                .map(this::toDTO)
                 .toList();
-
-        if (users.isEmpty()) {
-            throw new RuntimeException("No users found");
-        }
-
-        return users;
     }
 
-    public UserDTO findById(int id) {
-        Optional<User> user = userRepository.findById(id);
-
-        UserDTO userDTO = new UserDTO();
-        if (user.isPresent()) {
-            userDTO.setId(user.get().getId());
-            userDTO.setNomeCompleto(user.get().getNomeCompleto());
-            userDTO.setEmail(user.get().getEmail());
-            userDTO.setCpf(user.get().getCpf());
-            userDTO.setCargo(user.get().getCargoId());
-        }else{
-            throw new EmptyResultDataAccessException(1);
-        }
-
-        return userDTO;
+    public UserDTO findById(Long id) {
+        User user = findUserOrThrow(id);
+        return toDTO(user);
     }
 
     public UserDTO findByEmail(String email) {
-        Optional<User> user = userRepository.findByEmail(email);
-
-        UserDTO userDTO = new UserDTO();
-        if (user.isPresent()) {
-            userDTO.setId(user.get().getId());
-            userDTO.setNomeCompleto(user.get().getNomeCompleto());
-            userDTO.setEmail(user.get().getEmail());
-            userDTO.setCpf(user.get().getCpf());
-            userDTO.setCargo(user.get().getCargoId());
-        }else{
-            throw new EmptyResultDataAccessException(1);
-        }
-
-        return userDTO;
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado com e-mail: " + email));
+        return toDTO(user);
     }
 
     public UserDTO findByCpf(String cpf) {
-        Optional<User> user = userRepository.findByCpf(cpf);
-
-        UserDTO userDTO = new UserDTO();
-
-        if (user.isPresent()) {
-            userDTO.setId(user.get().getId());
-            userDTO.setNomeCompleto(user.get().getNomeCompleto());
-            userDTO.setEmail(user.get().getEmail());
-            userDTO.setCpf(user.get().getCpf());
-            userDTO.setCargo(user.get().getCargoId());
-
-        }else {
-            throw new EmptyResultDataAccessException(1);
-        }
-
-        return userDTO;
+        User user = userRepository.findByCpf(cpf)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado com CPF: " + cpf));
+        return toDTO(user);
     }
 
-    public List<UserDTO> findByCargo(String cargo) {
-        return userRepository.findByCargoId(cargo).stream()
-                .map(UserDTO::new)
+    public List<UserDTO> findByRoleId(Long roleId) {
+        return userRepository.findByRole_Id(roleId).stream()
+                .map(this::toDTO)
                 .toList();
     }
 
-    @Transactional
-    public User save(User user) {
-
-        if(userRepository.findByCpf(user.getCpf()).isPresent() ){
-            throw new RuntimeException("User cpf already exists");
-        }
-
-        if(userRepository.findByEmail(user.getEmail()).isPresent()){
-            throw new RuntimeException("User email already exists");
-        }
-
-        return userRepository.save(user);
+    public UserDTO save(UserDTO dto) {
+        validateEmailCpfUnique(dto.getEmail(), dto.getCpf(), null);
+        Cargo role = findRoleOrThrow(dto.getRoleId());
+        User user = toEntity(dto, role);
+        user = userRepository.save(user);
+        return toDTO(user);
     }
 
-    @Transactional
-    public User update(User user, int id) {
+    public UserDTO update(Long id, UserDTO dto) {
+        User user = findUserOrThrow(id);
+        validateEmailCpfUnique(dto.getEmail(), dto.getCpf(), id);
+        Cargo role = findRoleOrThrow(dto.getRoleId());
+        user.setFullName(dto.getFullName());
+        user.setRole(role);
+        user.setCpf(dto.getCpf());
+        user.setEmail(dto.getEmail());
+        user.setPhone(dto.getPhone());
+        user.setStatus(dto.getStatus());
+        user = userRepository.save(user);
+        return toDTO(user);
+    }
 
-        User userManaged = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado com o ID: " + id));
+    public void delete(Long id) {
+        User user = findUserOrThrow(id);
+        userRepository.delete(user);
+    }
 
+    private User findUserOrThrow(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado com id: " + id));
+    }
 
-        userManaged.setNomeCompleto(user.getNomeCompleto());
-        userManaged.setEmail(user.getEmail());
-        userManaged.setCpf(user.getCpf());
-        userManaged.setCargoId(user.getCargoId());
+    private Cargo findRoleOrThrow(Long id) {
+        return cargoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Cargo não encontrado com id: " + id));
+    }
 
+    private void validateEmailCpfUnique(String email, String cpf, Long excludeUserId) {
+        if (isEmailUsedByOther(email, excludeUserId)) {
+            throw new RuntimeException("Já existe usuário cadastrado com este e-mail");
+        }
+        if (isCpfUsedByOther(cpf, excludeUserId)) {
+            throw new RuntimeException("Já existe usuário cadastrado com este CPF");
+        }
+    }
 
-        return userRepository.save(userManaged);
+    private boolean isEmailUsedByOther(String email, Long excludeUserId) {
+        return userRepository.findByEmail(email)
+                .map(u -> !u.getId().equals(excludeUserId))
+                .orElse(false);
+    }
+
+    private boolean isCpfUsedByOther(String cpf, Long excludeUserId) {
+        return userRepository.findByCpf(cpf)
+                .map(u -> !u.getId().equals(excludeUserId))
+                .orElse(false);
+    }
+
+    private UserDTO toDTO(User user) {
+        return UserDTO.builder()
+                .id(user.getId())
+                .fullName(user.getFullName())
+                .roleId(user.getRole().getId())
+                .roleName(user.getRole().getName())
+                .cpf(user.getCpf())
+                .email(user.getEmail())
+                .phone(user.getPhone())
+                .status(user.getStatus())
+                .build();
+    }
+
+    private User toEntity(UserDTO dto, Cargo role) {
+        return User.builder()
+                .fullName(dto.getFullName())
+                .role(role)
+                .cpf(dto.getCpf())
+                .email(dto.getEmail())
+                .phone(dto.getPhone())
+                .status(dto.getStatus())
+                .passwordHash(null)
+                .build();
     }
 }
-

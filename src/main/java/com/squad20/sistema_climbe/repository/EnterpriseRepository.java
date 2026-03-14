@@ -5,9 +5,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
 
-public interface EnterpriseRepository extends JpaRepository<Enterprise, Integer> {
+public interface EnterpriseRepository extends JpaRepository<Enterprise, Long> {
 
-    Optional<Enterprise> findById(int id);
     Optional<Enterprise> findByEmail(String email);
     Optional<Enterprise> findByCnpj(String cnpj);
 

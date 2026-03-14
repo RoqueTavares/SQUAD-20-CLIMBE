@@ -1,17 +1,13 @@
 package com.squad20.sistema_climbe.service;
 
 import com.squad20.sistema_climbe.entity.Enterprise;
-import com.squad20.sistema_climbe.entity.User;
 import com.squad20.sistema_climbe.entityDTO.EnterpriseDTO;
-import com.squad20.sistema_climbe.entityDTO.UserDTO;
 import com.squad20.sistema_climbe.repository.EnterpriseRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -20,80 +16,80 @@ public class EnterpriseService {
     private final EnterpriseRepository enterpriseRepository;
 
     public List<EnterpriseDTO> findAll() {
-        List<EnterpriseDTO> enterprise= enterpriseRepository.findAll().stream()
-                .map(user -> new EnterpriseDTO(user))
+        return enterpriseRepository.findAll().stream()
+                .map(EnterpriseDTO::new)
                 .toList();
-
-        return enterprise ;
     }
 
-    public EnterpriseDTO findById(int id) {
-        Optional<Enterprise> enterprise = enterpriseRepository.findById(id);
-
-        if (enterprise.isPresent()) {
-            return new EnterpriseDTO(enterprise.get());
-        }else{
-            throw new RuntimeException("Enterprise not found");
-        }
+    public EnterpriseDTO findById(Long id) {
+        Enterprise enterprise = enterpriseRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Empresa não encontrada"));
+        return new EnterpriseDTO(enterprise);
     }
 
     public EnterpriseDTO findByEmail(String email) {
-        Optional<Enterprise> enterprise = enterpriseRepository.findByEmail(email);
-
-        if (enterprise.isPresent()) {
-            return new EnterpriseDTO(enterprise.get());
-        }else{
-            throw new RuntimeException("Enterprise not found");
-        }
+        Enterprise enterprise = enterpriseRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Empresa não encontrada"));
+        return new EnterpriseDTO(enterprise);
     }
 
     public EnterpriseDTO findByCnpj(String cnpj) {
-        Optional<Enterprise> enterprise = enterpriseRepository.findByCnpj(cnpj);
-
-        if(enterprise.isPresent()) {
-            return new EnterpriseDTO(enterprise.get());
-        }else{
-            throw new RuntimeException("Enterprise not found");
-        }
+        Enterprise enterprise = enterpriseRepository.findByCnpj(cnpj)
+                .orElseThrow(() -> new RuntimeException("Empresa não encontrada"));
+        return new EnterpriseDTO(enterprise);
     }
 
     @Transactional
-    public Enterprise save(Enterprise enterprise) {
-
-        if(enterprise.getCnpj() == null) {
-            throw new RuntimeException("Enterprise cnpj is null");
+    public EnterpriseDTO save(EnterpriseDTO dto) {
+        if (dto.getCnpj() == null || dto.getCnpj().isBlank()) {
+            throw new RuntimeException("CNPJ da empresa é obrigatório");
         }
-
-        if(enterpriseRepository.findByEmail(enterprise.getEmail()).isPresent()) {
-            throw new RuntimeException("Enterprise already exists");
+        if (enterpriseRepository.findByEmail(dto.getEmail()).isPresent()) {
+            throw new RuntimeException("Já existe empresa cadastrada com este e-mail");
         }
-
-       return enterpriseRepository.save(enterprise);
-
+        Enterprise enterprise = toEntity(dto);
+        enterprise = enterpriseRepository.save(enterprise);
+        return new EnterpriseDTO(enterprise);
     }
 
     @Transactional
-    public Enterprise update(int id, Enterprise enterprise) {
-        Enterprise oldEnterprise = enterpriseRepository.getReferenceById(id);
+    public EnterpriseDTO update(Long id, EnterpriseDTO dto) {
+        Enterprise existing = enterpriseRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Empresa não encontrada"));
+        existing.setLegalName(dto.getLegalName());
+        existing.setTradeName(dto.getTradeName());
+        existing.setCnpj(dto.getCnpj());
+        existing.setEmail(dto.getEmail());
+        existing.setStreet(dto.getStreet());
+        existing.setNeighborhood(dto.getNeighborhood());
+        existing.setCity(dto.getCity());
+        existing.setNumber(dto.getNumber());
+        existing.setState(dto.getState());
+        existing.setZipCode(dto.getZipCode());
+        existing.setPhone(dto.getPhone());
+        existing.setRepresentativeName(dto.getRepresentativeName());
+        existing.setRepresentativeCpf(dto.getRepresentativeCpf());
+        existing.setRepresentativePhone(dto.getRepresentativePhone());
+        existing = enterpriseRepository.save(existing);
+        return new EnterpriseDTO(existing);
+    }
 
-        if(oldEnterprise != null) {
-            oldEnterprise.setRazao_social(enterprise.getRazao_social());
-            oldEnterprise.setCnpj(enterprise.getCnpj());
-            oldEnterprise.setEmail(enterprise.getEmail());
-            oldEnterprise.setLogradouro(enterprise.getLogradouro());
-            oldEnterprise.setBairro(enterprise.getBairro());
-            oldEnterprise.setCidade(enterprise.getCidade());
-            oldEnterprise.setNumero(enterprise.getNumero());
-            oldEnterprise.setUf(enterprise.getUf());
-            oldEnterprise.setCep(enterprise.getCep());
-            oldEnterprise.setTelefone(enterprise.getTelefone());
-            oldEnterprise.setRepresentante_nome(enterprise.getRepresentante_nome());
-            oldEnterprise.setRepresentante_cnpj(enterprise.getRepresentante_cnpj());
-            oldEnterprise.setRepresentante_contato(enterprise.getRepresentante_contato());
-        }else{
-            throw new RuntimeException("Enterprise not found");
-        }
-
-        return enterpriseRepository.save(oldEnterprise);
+    private Enterprise toEntity(EnterpriseDTO dto) {
+        Enterprise e = new Enterprise();
+        e.setLegalName(dto.getLegalName());
+        e.setTradeName(dto.getTradeName());
+        e.setCnpj(dto.getCnpj());
+        e.setStreet(dto.getStreet());
+        e.setNumber(dto.getNumber());
+        e.setNeighborhood(dto.getNeighborhood());
+        e.setCity(dto.getCity());
+        e.setState(dto.getState());
+        e.setZipCode(dto.getZipCode());
+        e.setPhone(dto.getPhone());
+        e.setEmail(dto.getEmail());
+        e.setRepresentativeName(dto.getRepresentativeName());
+        e.setRepresentativeCpf(dto.getRepresentativeCpf());
+        e.setRepresentativePhone(dto.getRepresentativePhone());
+        return e;
     }
 }

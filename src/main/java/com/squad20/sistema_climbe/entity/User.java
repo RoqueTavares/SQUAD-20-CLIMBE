@@ -1,44 +1,52 @@
 package com.squad20.sistema_climbe.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import lombok.Data;
+import lombok.*;
 
-import java.io.Serializable;
+import java.util.Set;
 
 @Entity
-@Table(name = "tb_user")
-@Data
-public class User implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+@Table(name = "usuarios")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_usuario")
-    private Integer id;
+    private Long id;
 
-    @NotBlank(message = "O nome completo é obrigatório")
-    @Column(name = "nome_completo", nullable = false)
-    private String nomeCompleto;
+    @Column(name = "nome_completo", nullable = false, length = 255)
+    private String fullName;
 
-    @Column(name = "cargo_id", nullable = false)
-    private String cargoId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cargo_id", nullable = false)
+    private Cargo role;
 
-    @NotBlank(message = "O CPF é obrigatório")
-    @Column(nullable = false, unique = true, length = 14)
+    @Column(nullable = false, length = 14)
     private String cpf;
 
-    @NotBlank(message = "O e-mail é obrigatório")
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, length = 255)
     private String email;
 
-    @Column(length = 50)
-    private String contato;
+    @Column(name = "contato", length = 50)
+    private String phone;
 
-    private String situacao;
+    @Column(name = "situacao", length = 255)
+    private String status;
 
-    @NotBlank(message = "A senha é obrigatória")
-    @Column(name = "senha_hash", nullable = false, length = 60)
-    private String senhaHash;
+    @Column(name = "senha_hash", length = 60)
+    private String passwordHash;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "usuario_permissoes",
+            joinColumns = @JoinColumn(name = "id_usuario"),
+            inverseJoinColumns = @JoinColumn(name = "id_permissao")
+    )
+    private Set<Permission> permissions;
 }
+

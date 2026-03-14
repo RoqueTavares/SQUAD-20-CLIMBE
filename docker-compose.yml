@@ -4,7 +4,7 @@ services:
     container_name: postgres_db
     restart: always
     ports:
-      - "5432:5432"
+      - "5433:5432"
     environment:
       - POSTGRES_USER=admin
       - POSTGRES_PASSWORD=admin
@@ -17,7 +17,7 @@ services:
     container_name: spring_api
     restart: on-failure
     ports:
-      - "8080:8080"
+      - "8081:8080"
     depends_on:
       - db
     env_file:

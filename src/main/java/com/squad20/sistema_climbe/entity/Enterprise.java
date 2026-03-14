@@ -4,29 +4,65 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.util.Set;
 
 @Entity
-@Table(name = "tb_enterprise")
+@Table(name = "empresas")
 @Data
 public class Enterprise implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private int id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_empresa")
+    private Long id;
 
-    private String razao_social;
-    private String nome_fantasia;
+    @Column(name = "razao_social")
+    private String legalName;
+
+    @Column(name = "nome_fantasia")
+    private String tradeName;
+
     private String cnpj;
-    private String logradouro;
-    private int numero;
-    private String bairro;
-    private String cidade;
-    private String uf;
-    private String cep;
-    private String telefone;
+
+    @Column(name = "logradouro")
+    private String street;
+
+    @Column(name = "numero", length = 255)
+    private String number;
+
+    @Column(name = "bairro")
+    private String neighborhood;
+
+    @Column(name = "cidade")
+    private String city;
+
+    @Column(name = "uf")
+    private String state;
+
+    @Column(name = "cep")
+    private String zipCode;
+
+    @Column(name = "telefone")
+    private String phone;
+
     private String email;
-    private String representante_nome;
-    private String representante_cnpj;
-    private String representante_contato;
+
+    @Column(name = "representante_nome")
+    private String representativeName;
+
+    @Column(name = "representante_cpf", length = 14)
+    private String representativeCpf;
+
+    @Column(name = "representante_contato")
+    private String representativePhone;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "empresa_servico",
+            joinColumns = @JoinColumn(name = "id_empresa"),
+            inverseJoinColumns = @JoinColumn(name = "id_servico")
+    )
+    private Set<OfferedService> services;
 }
+
