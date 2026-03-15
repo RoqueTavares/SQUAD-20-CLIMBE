@@ -1,16 +1,18 @@
 package com.squad20.sistema_climbe.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 
-import java.io.Serializable;
 import java.util.Set;
 
 @Entity
 @Table(name = "empresas")
-@Data
-public class Enterprise implements Serializable {
-    private static final long serialVersionUID = 1L;
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class Enterprise {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -65,4 +67,3 @@ public class Enterprise implements Serializable {
     )
     private Set<OfferedService> services;
 }
-

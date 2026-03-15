@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
 import java.util.List;
 
 @Tag(name = "Permissões", description = "Gestão de permissões de acesso dos usuários")
@@ -36,7 +37,7 @@ public class PermissionController {
 
     @Operation(summary = "Criar permissão", description = "Cadastra uma nova permissão")
     @PostMapping
-    public ResponseEntity<PermissionDTO> save(@RequestBody PermissionDTO dto) {
+    public ResponseEntity<PermissionDTO> save(@Valid @RequestBody PermissionDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(permissionService.save(dto));
     }
 
@@ -56,4 +57,3 @@ public class PermissionController {
         return ResponseEntity.noContent().build();
     }
 }
-

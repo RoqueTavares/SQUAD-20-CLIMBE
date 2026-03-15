@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
 import java.util.List;
 
 @Tag(name = "Serviços", description = "Gestão dos serviços oferecidos pela Climbe")
@@ -36,7 +37,7 @@ public class ServiceController {
 
     @Operation(summary = "Criar serviço", description = "Cadastra um novo serviço")
     @PostMapping
-    public ResponseEntity<ServiceDTO> save(@RequestBody ServiceDTO dto) {
+    public ResponseEntity<ServiceDTO> save(@Valid @RequestBody ServiceDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(serviceService.save(dto));
     }
 

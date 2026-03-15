@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
 import java.util.List;
 
 @Tag(name = "Cargos", description = "Gestão de cargos (funções) dos usuários")
@@ -36,7 +37,7 @@ public class CargoController {
 
     @Operation(summary = "Criar cargo", description = "Cadastra um novo cargo")
     @PostMapping
-    public ResponseEntity<CargoDTO> save(@RequestBody CargoDTO dto) {
+    public ResponseEntity<CargoDTO> save(@Valid @RequestBody CargoDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(cargoService.save(dto));
     }
 

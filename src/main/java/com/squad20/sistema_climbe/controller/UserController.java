@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
 import java.util.List;
 
 @Tag(name = "Usuários", description = "Cadastro e consulta de usuários do sistema")
@@ -57,7 +58,7 @@ public class UserController {
 
     @Operation(summary = "Criar usuário", description = "Cadastra um novo usuário")
     @PostMapping
-    public ResponseEntity<UserDTO> save(@RequestBody UserDTO dto) {
+    public ResponseEntity<UserDTO> save(@Valid @RequestBody UserDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(userService.save(dto));
     }
 
