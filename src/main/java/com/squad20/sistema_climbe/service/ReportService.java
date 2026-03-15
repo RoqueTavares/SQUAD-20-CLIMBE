@@ -2,11 +2,14 @@ package com.squad20.sistema_climbe.service;
 
 import com.squad20.sistema_climbe.entity.Contract;
 import com.squad20.sistema_climbe.entity.Report;
-import com.squad20.sistema_climbe.entityDTO.ReportDTO;
+import com.squad20.sistema_climbe.dto.ReportDTO;
 import com.squad20.sistema_climbe.exception.ResourceNotFoundException;
+import com.squad20.sistema_climbe.mapper.ReportMapper;
 import com.squad20.sistema_climbe.repository.ContractRepository;
 import com.squad20.sistema_climbe.repository.ReportRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,34 +21,34 @@ public class ReportService {
 
     private final ReportRepository reportRepository;
     private final ContractRepository contractRepository;
+    private final ReportMapper reportMapper;
 
     @Transactional(readOnly = true)
-    public List<ReportDTO> findAll() {
-        return reportRepository.findAll().stream()
-                .map(this::toDTO)
-                .toList();
+    public Page<ReportDTO> findAll(Pageable pageable) {
+        return reportRepository.findAll(pageable).map(reportMapper::toDTO);
     }
 
     @Transactional(readOnly = true)
     public List<ReportDTO> findByContractId(Long contractId) {
         return reportRepository.findByContract_Id(contractId).stream()
-                .map(this::toDTO)
+                .map(reportMapper::toDTO)
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public ReportDTO findById(Long id) {
         Report report = findReportOrThrow(id);
-        return toDTO(report);
+        return reportMapper.toDTO(report);
     }
 
     @Transactional
     public ReportDTO save(ReportDTO dto) {
         Contract contract = contractRepository.findById(dto.getContractId())
                 .orElseThrow(() -> new ResourceNotFoundException("Contrato não encontrado com id: " + dto.getContractId()));
-        Report report = toEntity(dto, contract);
+        Report report = reportMapper.toEntity(dto);
+        report.setContract(contract);
         report = reportRepository.save(report);
-        return toDTO(report);
+        return reportMapper.toDTO(report);
     }
 
     @Transactional
@@ -59,7 +62,7 @@ public class ReportService {
             existing.setContract(contract);
         }
         existing = reportRepository.save(existing);
-        return toDTO(existing);
+        return reportMapper.toDTO(existing);
     }
 
     @Transactional
@@ -71,22 +74,5 @@ public class ReportService {
     private Report findReportOrThrow(Long id) {
         return reportRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Relatório não encontrado com id: " + id));
-    }
-
-    private ReportDTO toDTO(Report r) {
-        return ReportDTO.builder()
-                .id(r.getId())
-                .contractId(r.getContract() != null ? r.getContract().getId() : null)
-                .pdfUrl(r.getPdfUrl())
-                .sentAt(r.getSentAt())
-                .build();
-    }
-
-    private Report toEntity(ReportDTO dto, Contract contract) {
-        return Report.builder()
-                .contract(contract)
-                .pdfUrl(dto.getPdfUrl())
-                .sentAt(dto.getSentAt())
-                .build();
     }
 }

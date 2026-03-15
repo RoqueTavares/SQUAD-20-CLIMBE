@@ -28,13 +28,13 @@ public class User implements UserDetails {
     private String fullName;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cargo_id")
+    @JoinColumn(name = "cargo_id", nullable = false)
     private Cargo role;
 
-    @Column(nullable = false, length = 14)
+    @Column(unique = true, nullable = false, length = 14)
     private String cpf;
 
-    @Column(nullable = false, length = 255)
+    @Column(unique = true, nullable = false, length = 255)
     private String email;
 
     @Column(name = "contato", length = 50)

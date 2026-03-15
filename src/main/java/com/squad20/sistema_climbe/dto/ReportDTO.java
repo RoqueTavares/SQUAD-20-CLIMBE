@@ -1,15 +1,17 @@
-package com.squad20.sistema_climbe.entityDTO;
+package com.squad20.sistema_climbe.dto;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
+
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class SpreadsheetDTO {
+public class ReportDTO {
 
     private Long id;
 
@@ -17,10 +19,7 @@ public class SpreadsheetDTO {
     private Long contractId;
 
     @Size(max = 1000)
-    private String googleSheetsUrl;
+    private String pdfUrl;
 
-    private Boolean locked;
-
-    @Size(max = 100)
-    private String viewPermission;
+    private LocalDateTime sentAt;
 }

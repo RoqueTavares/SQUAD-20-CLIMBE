@@ -3,12 +3,15 @@ package com.squad20.sistema_climbe.service;
 import com.squad20.sistema_climbe.entity.Enterprise;
 import com.squad20.sistema_climbe.entity.Meeting;
 import com.squad20.sistema_climbe.entity.User;
-import com.squad20.sistema_climbe.entityDTO.MeetingDTO;
+import com.squad20.sistema_climbe.dto.MeetingDTO;
 import com.squad20.sistema_climbe.exception.ResourceNotFoundException;
+import com.squad20.sistema_climbe.mapper.MeetingMapper;
 import com.squad20.sistema_climbe.repository.EnterpriseRepository;
 import com.squad20.sistema_climbe.repository.MeetingRepository;
 import com.squad20.sistema_climbe.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,25 +26,24 @@ public class MeetingService {
     private final MeetingRepository meetingRepository;
     private final EnterpriseRepository enterpriseRepository;
     private final UserRepository userRepository;
+    private final MeetingMapper meetingMapper;
 
     @Transactional(readOnly = true)
-    public List<MeetingDTO> findAll() {
-        return meetingRepository.findAll().stream()
-                .map(this::toDTO)
-                .toList();
+    public Page<MeetingDTO> findAll(Pageable pageable) {
+        return meetingRepository.findAll(pageable).map(meetingMapper::toDTO);
     }
 
     @Transactional(readOnly = true)
     public List<MeetingDTO> findByEnterpriseId(Long enterpriseId) {
         return meetingRepository.findByEnterprise_Id(enterpriseId).stream()
-                .map(this::toDTO)
+                .map(meetingMapper::toDTO)
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public MeetingDTO findById(Long id) {
         Meeting meeting = findMeetingOrThrow(id);
-        return toDTO(meeting);
+        return meetingMapper.toDTO(meeting);
     }
 
     @Transactional
@@ -49,9 +51,11 @@ public class MeetingService {
         Enterprise enterprise = enterpriseRepository.findById(dto.getEnterpriseId())
                 .orElseThrow(() -> new ResourceNotFoundException("Empresa não encontrada com id: " + dto.getEnterpriseId()));
         Set<User> participants = resolveParticipants(dto.getParticipantIds());
-        Meeting meeting = toEntity(dto, enterprise, participants);
+        Meeting meeting = meetingMapper.toEntity(dto);
+        meeting.setEnterprise(enterprise);
+        meeting.setParticipants(participants != null ? participants : new HashSet<>());
         meeting = meetingRepository.save(meeting);
-        return toDTO(meeting);
+        return meetingMapper.toDTO(meeting);
     }
 
     @Transactional
@@ -73,7 +77,7 @@ public class MeetingService {
             existing.setParticipants(resolveParticipants(dto.getParticipantIds()));
         }
         existing = meetingRepository.save(existing);
-        return toDTO(existing);
+        return meetingMapper.toDTO(existing);
     }
 
     @Transactional
@@ -98,45 +102,5 @@ public class MeetingService {
             users.add(user);
         }
         return users;
-    }
-
-    private MeetingDTO toDTO(Meeting m) {
-        Long enterpriseId = null;
-        String enterpriseName = null;
-        if (m.getEnterprise() != null) {
-            enterpriseId = m.getEnterprise().getId();
-            enterpriseName = m.getEnterprise().getTradeName() != null
-                    ? m.getEnterprise().getTradeName() : m.getEnterprise().getLegalName();
-        }
-        List<Long> participantIds = m.getParticipants() == null
-                ? List.of()
-                : m.getParticipants().stream().map(User::getId).toList();
-        return MeetingDTO.builder()
-                .id(m.getId())
-                .enterpriseId(enterpriseId)
-                .enterpriseName(enterpriseName)
-                .title(m.getTitle())
-                .date(m.getDate())
-                .time(m.getTime())
-                .inPerson(m.getInPerson())
-                .location(m.getLocation())
-                .agenda(m.getAgenda())
-                .status(m.getStatus())
-                .participantIds(participantIds)
-                .build();
-    }
-
-    private Meeting toEntity(MeetingDTO dto, Enterprise enterprise, Set<User> participants) {
-        return Meeting.builder()
-                .title(dto.getTitle())
-                .enterprise(enterprise)
-                .date(dto.getDate())
-                .time(dto.getTime())
-                .inPerson(dto.getInPerson())
-                .location(dto.getLocation())
-                .agenda(dto.getAgenda())
-                .status(dto.getStatus())
-                .participants(participants != null ? participants : new HashSet<>())
-                .build();
     }
 }

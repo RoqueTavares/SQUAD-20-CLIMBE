@@ -10,11 +10,11 @@ class ServiceApiTest extends ApiTestBase {
 
     @Override
     protected String getMinimalPostBody() {
-        return "{\"name\":\"Serviço Test\"}";
+        return "{\"name\":\"Serviço Test " + System.nanoTime() + "\"}";
     }
 
     @Override
     protected String getPatchBody() {
-        return "{\"name\":\"Serviço Atualizado\"}";
+        return "{\"name\":\"Serviço Atualizado " + System.nanoTime() + "\"}";
     }
 }

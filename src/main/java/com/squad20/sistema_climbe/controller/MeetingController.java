@@ -1,12 +1,14 @@
 package com.squad20.sistema_climbe.controller;
 
-import com.squad20.sistema_climbe.entityDTO.MeetingDTO;
+import com.squad20.sistema_climbe.dto.MeetingDTO;
 import com.squad20.sistema_climbe.service.MeetingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,15 +19,14 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/meetings")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class MeetingController {
 
     private final MeetingService meetingService;
 
-    @Operation(summary = "Listar reuniões", description = "Retorna todas as reuniões")
+    @Operation(summary = "Listar reuniões", description = "Retorna reuniões paginadas (page, size, sort)")
     @GetMapping
-    public ResponseEntity<List<MeetingDTO>> findAll() {
-        return ResponseEntity.ok(meetingService.findAll());
+    public ResponseEntity<Page<MeetingDTO>> findAll(Pageable pageable) {
+        return ResponseEntity.ok(meetingService.findAll(pageable));
     }
 
     @Operation(summary = "Listar por empresa", description = "Retorna as reuniões da empresa informada")

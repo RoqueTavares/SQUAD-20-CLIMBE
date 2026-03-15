@@ -19,35 +19,22 @@ public class Enterprise {
     @Column(name = "id_empresa")
     private Long id;
 
-    @Column(name = "razao_social")
+    @Column(name = "razao_social", nullable = false)
     private String legalName;
 
     @Column(name = "nome_fantasia")
     private String tradeName;
 
+    @Column(unique = true, nullable = false)
     private String cnpj;
 
-    @Column(name = "logradouro")
-    private String street;
-
-    @Column(name = "numero", length = 255)
-    private String number;
-
-    @Column(name = "bairro")
-    private String neighborhood;
-
-    @Column(name = "cidade")
-    private String city;
-
-    @Column(name = "uf")
-    private String state;
-
-    @Column(name = "cep")
-    private String zipCode;
+    @Embedded
+    private Address address;
 
     @Column(name = "telefone")
     private String phone;
 
+    @Column(unique = true, nullable = false)
     private String email;
 
     @Column(name = "representante_nome")

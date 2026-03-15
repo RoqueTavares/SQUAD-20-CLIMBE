@@ -1,12 +1,14 @@
 package com.squad20.sistema_climbe.controller;
 
-import com.squad20.sistema_climbe.entityDTO.NotificationDTO;
+import com.squad20.sistema_climbe.dto.NotificationDTO;
 import com.squad20.sistema_climbe.service.NotificationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,15 +19,14 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/notifications")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class NotificationController {
 
     private final NotificationService notificationService;
 
-    @Operation(summary = "Listar notificações", description = "Retorna todas as notificações")
+    @Operation(summary = "Listar notificações", description = "Retorna notificações paginadas (page, size, sort)")
     @GetMapping
-    public ResponseEntity<List<NotificationDTO>> findAll() {
-        return ResponseEntity.ok(notificationService.findAll());
+    public ResponseEntity<Page<NotificationDTO>> findAll(Pageable pageable) {
+        return ResponseEntity.ok(notificationService.findAll(pageable));
     }
 
     @Operation(summary = "Listar por usuário", description = "Retorna as notificações do usuário informado")

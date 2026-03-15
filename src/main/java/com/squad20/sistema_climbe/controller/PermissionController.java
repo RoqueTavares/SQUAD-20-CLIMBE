@@ -1,11 +1,13 @@
 package com.squad20.sistema_climbe.controller;
 
-import com.squad20.sistema_climbe.entityDTO.PermissionDTO;
+import com.squad20.sistema_climbe.dto.PermissionDTO;
 import com.squad20.sistema_climbe.service.PermissionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,15 +19,14 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/permissions")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class PermissionController {
 
     private final PermissionService permissionService;
 
-    @Operation(summary = "Listar permissões", description = "Retorna todas as permissões cadastradas")
+    @Operation(summary = "Listar permissões", description = "Retorna permissões paginadas (page, size, sort)")
     @GetMapping
-    public ResponseEntity<List<PermissionDTO>> findAll() {
-        return ResponseEntity.ok(permissionService.findAll());
+    public ResponseEntity<Page<PermissionDTO>> findAll(Pageable pageable) {
+        return ResponseEntity.ok(permissionService.findAll(pageable));
     }
 
     @Operation(summary = "Buscar permissão por ID", description = "Retorna uma permissão pelo identificador")

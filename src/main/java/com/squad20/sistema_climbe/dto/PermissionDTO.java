@@ -1,4 +1,4 @@
-package com.squad20.sistema_climbe.entityDTO;
+package com.squad20.sistema_climbe.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -17,4 +17,3 @@ public class PermissionDTO {
     @Size(max = 255)
     private String description;
 }
-

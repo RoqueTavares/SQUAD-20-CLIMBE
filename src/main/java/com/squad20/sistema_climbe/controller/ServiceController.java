@@ -1,11 +1,13 @@
 package com.squad20.sistema_climbe.controller;
 
-import com.squad20.sistema_climbe.entityDTO.ServiceDTO;
+import com.squad20.sistema_climbe.dto.ServiceDTO;
 import com.squad20.sistema_climbe.service.ServiceService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,15 +19,14 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/services")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class ServiceController {
 
     private final ServiceService serviceService;
 
-    @Operation(summary = "Listar serviços", description = "Retorna todos os serviços cadastrados")
+    @Operation(summary = "Listar serviços", description = "Retorna serviços paginados (page, size, sort)")
     @GetMapping
-    public ResponseEntity<List<ServiceDTO>> findAll() {
-        return ResponseEntity.ok(serviceService.findAll());
+    public ResponseEntity<Page<ServiceDTO>> findAll(Pageable pageable) {
+        return ResponseEntity.ok(serviceService.findAll(pageable));
     }
 
     @Operation(summary = "Buscar serviço por ID", description = "Retorna um serviço pelo identificador")

@@ -1,11 +1,13 @@
 package com.squad20.sistema_climbe.controller;
 
-import com.squad20.sistema_climbe.entityDTO.UserDTO;
+import com.squad20.sistema_climbe.dto.UserDTO;
 import com.squad20.sistema_climbe.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,15 +19,14 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class UserController {
 
     private final UserService userService;
 
-    @Operation(summary = "Listar usuários", description = "Retorna todos os usuários cadastrados")
+    @Operation(summary = "Listar usuários", description = "Retorna usuários paginados (page, size, sort)")
     @GetMapping
-    public ResponseEntity<List<UserDTO>> findAll() {
-        return ResponseEntity.ok(userService.findAll());
+    public ResponseEntity<Page<UserDTO>> findAll(Pageable pageable) {
+        return ResponseEntity.ok(userService.findAll(pageable));
     }
 
     @Operation(summary = "Buscar por ID", description = "Retorna um usuário pelo identificador")

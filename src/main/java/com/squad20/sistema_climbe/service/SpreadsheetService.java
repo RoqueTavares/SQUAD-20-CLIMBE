@@ -2,11 +2,14 @@ package com.squad20.sistema_climbe.service;
 
 import com.squad20.sistema_climbe.entity.Contract;
 import com.squad20.sistema_climbe.entity.Spreadsheet;
-import com.squad20.sistema_climbe.entityDTO.SpreadsheetDTO;
+import com.squad20.sistema_climbe.dto.SpreadsheetDTO;
 import com.squad20.sistema_climbe.exception.ResourceNotFoundException;
+import com.squad20.sistema_climbe.mapper.SpreadsheetMapper;
 import com.squad20.sistema_climbe.repository.ContractRepository;
 import com.squad20.sistema_climbe.repository.SpreadsheetRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,34 +21,34 @@ public class SpreadsheetService {
 
     private final SpreadsheetRepository spreadsheetRepository;
     private final ContractRepository contractRepository;
+    private final SpreadsheetMapper spreadsheetMapper;
 
     @Transactional(readOnly = true)
-    public List<SpreadsheetDTO> findAll() {
-        return spreadsheetRepository.findAll().stream()
-                .map(this::toDTO)
-                .toList();
+    public Page<SpreadsheetDTO> findAll(Pageable pageable) {
+        return spreadsheetRepository.findAll(pageable).map(spreadsheetMapper::toDTO);
     }
 
     @Transactional(readOnly = true)
     public List<SpreadsheetDTO> findByContractId(Long contractId) {
         return spreadsheetRepository.findByContract_Id(contractId).stream()
-                .map(this::toDTO)
+                .map(spreadsheetMapper::toDTO)
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public SpreadsheetDTO findById(Long id) {
         Spreadsheet spreadsheet = findSpreadsheetOrThrow(id);
-        return toDTO(spreadsheet);
+        return spreadsheetMapper.toDTO(spreadsheet);
     }
 
     @Transactional
     public SpreadsheetDTO save(SpreadsheetDTO dto) {
         Contract contract = contractRepository.findById(dto.getContractId())
                 .orElseThrow(() -> new ResourceNotFoundException("Contrato não encontrado com id: " + dto.getContractId()));
-        Spreadsheet spreadsheet = toEntity(dto, contract);
+        Spreadsheet spreadsheet = spreadsheetMapper.toEntity(dto);
+        spreadsheet.setContract(contract);
         spreadsheet = spreadsheetRepository.save(spreadsheet);
-        return toDTO(spreadsheet);
+        return spreadsheetMapper.toDTO(spreadsheet);
     }
 
     @Transactional
@@ -60,7 +63,7 @@ public class SpreadsheetService {
             existing.setContract(contract);
         }
         existing = spreadsheetRepository.save(existing);
-        return toDTO(existing);
+        return spreadsheetMapper.toDTO(existing);
     }
 
     @Transactional
@@ -72,24 +75,5 @@ public class SpreadsheetService {
     private Spreadsheet findSpreadsheetOrThrow(Long id) {
         return spreadsheetRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Planilha não encontrada com id: " + id));
-    }
-
-    private SpreadsheetDTO toDTO(Spreadsheet s) {
-        return SpreadsheetDTO.builder()
-                .id(s.getId())
-                .contractId(s.getContract() != null ? s.getContract().getId() : null)
-                .googleSheetsUrl(s.getGoogleSheetsUrl())
-                .locked(s.getLocked())
-                .viewPermission(s.getViewPermission())
-                .build();
-    }
-
-    private Spreadsheet toEntity(SpreadsheetDTO dto, Contract contract) {
-        return Spreadsheet.builder()
-                .contract(contract)
-                .googleSheetsUrl(dto.getGoogleSheetsUrl())
-                .locked(dto.getLocked())
-                .viewPermission(dto.getViewPermission())
-                .build();
     }
 }

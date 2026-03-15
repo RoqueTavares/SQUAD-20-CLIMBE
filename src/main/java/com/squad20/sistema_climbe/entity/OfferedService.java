@@ -17,6 +17,6 @@ public class OfferedService {
     @Column(name = "id_servico")
     private Long id;
 
-    @Column(name = "nome", nullable = false, length = 255)
+    @Column(name = "nome", unique = true, nullable = false, length = 255)
     private String name;
 }

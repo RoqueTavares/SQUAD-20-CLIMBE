@@ -10,11 +10,11 @@ class PermissionApiTest extends ApiTestBase {
 
     @Override
     protected String getMinimalPostBody() {
-        return "{\"description\":\"Permissão Test\"}";
+        return "{\"description\":\"Permissão Test " + System.nanoTime() + "\"}";
     }
 
     @Override
     protected String getPatchBody() {
-        return "{\"description\":\"Permissão Atualizada\"}";
+        return "{\"description\":\"Permissão Atualizada " + System.nanoTime() + "\"}";
     }
 }

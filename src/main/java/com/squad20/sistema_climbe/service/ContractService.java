@@ -2,11 +2,14 @@ package com.squad20.sistema_climbe.service;
 
 import com.squad20.sistema_climbe.entity.Contract;
 import com.squad20.sistema_climbe.entity.Proposal;
-import com.squad20.sistema_climbe.entityDTO.ContractDTO;
+import com.squad20.sistema_climbe.dto.ContractDTO;
 import com.squad20.sistema_climbe.exception.ResourceNotFoundException;
+import com.squad20.sistema_climbe.mapper.ContractMapper;
 import com.squad20.sistema_climbe.repository.ContractRepository;
 import com.squad20.sistema_climbe.repository.ProposalRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,34 +21,34 @@ public class ContractService {
 
     private final ContractRepository contractRepository;
     private final ProposalRepository proposalRepository;
+    private final ContractMapper contractMapper;
 
     @Transactional(readOnly = true)
-    public List<ContractDTO> findAll() {
-        return contractRepository.findAll().stream()
-                .map(this::toDTO)
-                .toList();
+    public Page<ContractDTO> findAll(Pageable pageable) {
+        return contractRepository.findAll(pageable).map(contractMapper::toDTO);
     }
 
     @Transactional(readOnly = true)
     public List<ContractDTO> findByProposalId(Long proposalId) {
         return contractRepository.findByProposal_Id(proposalId).stream()
-                .map(this::toDTO)
+                .map(contractMapper::toDTO)
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public ContractDTO findById(Long id) {
         Contract contract = findContractOrThrow(id);
-        return toDTO(contract);
+        return contractMapper.toDTO(contract);
     }
 
     @Transactional
     public ContractDTO save(ContractDTO dto) {
         Proposal proposal = proposalRepository.findById(dto.getProposalId())
                 .orElseThrow(() -> new ResourceNotFoundException("Proposta não encontrada com id: " + dto.getProposalId()));
-        Contract contract = toEntity(dto, proposal);
+        Contract contract = contractMapper.toEntity(dto);
+        contract.setProposal(proposal);
         contract = contractRepository.save(contract);
-        return toDTO(contract);
+        return contractMapper.toDTO(contract);
     }
 
     @Transactional
@@ -60,7 +63,7 @@ public class ContractService {
             existing.setProposal(proposal);
         }
         existing = contractRepository.save(existing);
-        return toDTO(existing);
+        return contractMapper.toDTO(existing);
     }
 
     @Transactional
@@ -72,24 +75,5 @@ public class ContractService {
     private Contract findContractOrThrow(Long id) {
         return contractRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Contrato não encontrado com id: " + id));
-    }
-
-    private ContractDTO toDTO(Contract c) {
-        return ContractDTO.builder()
-                .id(c.getId())
-                .proposalId(c.getProposal() != null ? c.getProposal().getId() : null)
-                .startDate(c.getStartDate())
-                .endDate(c.getEndDate())
-                .status(c.getStatus())
-                .build();
-    }
-
-    private Contract toEntity(ContractDTO dto, Proposal proposal) {
-        return Contract.builder()
-                .proposal(proposal)
-                .startDate(dto.getStartDate())
-                .endDate(dto.getEndDate())
-                .status(dto.getStatus())
-                .build();
     }
 }

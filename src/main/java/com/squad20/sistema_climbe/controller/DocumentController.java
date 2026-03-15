@@ -1,12 +1,14 @@
 package com.squad20.sistema_climbe.controller;
 
-import com.squad20.sistema_climbe.entityDTO.DocumentDTO;
+import com.squad20.sistema_climbe.dto.DocumentDTO;
 import com.squad20.sistema_climbe.service.DocumentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,15 +19,14 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/documents")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class DocumentController {
 
     private final DocumentService documentService;
 
-    @Operation(summary = "Listar documentos", description = "Retorna todos os documentos")
+    @Operation(summary = "Listar documentos", description = "Retorna documentos paginados (page, size, sort)")
     @GetMapping
-    public ResponseEntity<List<DocumentDTO>> findAll() {
-        return ResponseEntity.ok(documentService.findAll());
+    public ResponseEntity<Page<DocumentDTO>> findAll(Pageable pageable) {
+        return ResponseEntity.ok(documentService.findAll(pageable));
     }
 
     @Operation(summary = "Listar por empresa", description = "Retorna os documentos da empresa informada")

@@ -1,10 +1,13 @@
 package com.squad20.sistema_climbe.service;
 
 import com.squad20.sistema_climbe.entity.Permission;
-import com.squad20.sistema_climbe.entityDTO.PermissionDTO;
+import com.squad20.sistema_climbe.dto.PermissionDTO;
 import com.squad20.sistema_climbe.exception.ResourceNotFoundException;
+import com.squad20.sistema_climbe.mapper.PermissionMapper;
 import com.squad20.sistema_climbe.repository.PermissionRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,25 +18,24 @@ import java.util.List;
 public class PermissionService {
 
     private final PermissionRepository permissionRepository;
+    private final PermissionMapper permissionMapper;
 
     @Transactional(readOnly = true)
-    public List<PermissionDTO> findAll() {
-        return permissionRepository.findAll().stream()
-                .map(this::toDTO)
-                .toList();
+    public Page<PermissionDTO> findAll(Pageable pageable) {
+        return permissionRepository.findAll(pageable).map(permissionMapper::toDTO);
     }
 
     @Transactional(readOnly = true)
     public PermissionDTO findById(Long id) {
         Permission permission = findPermissionOrThrow(id);
-        return toDTO(permission);
+        return permissionMapper.toDTO(permission);
     }
 
     @Transactional
     public PermissionDTO save(PermissionDTO dto) {
-        Permission permission = toEntity(dto);
+        Permission permission = permissionMapper.toEntity(dto);
         permission = permissionRepository.save(permission);
-        return toDTO(permission);
+        return permissionMapper.toDTO(permission);
     }
 
     @Transactional
@@ -41,7 +43,7 @@ public class PermissionService {
         Permission permission = findPermissionOrThrow(id);
         if (dto.getDescription() != null) permission.setDescription(dto.getDescription());
         permission = permissionRepository.save(permission);
-        return toDTO(permission);
+        return permissionMapper.toDTO(permission);
     }
 
     @Transactional
@@ -53,19 +55,6 @@ public class PermissionService {
     private Permission findPermissionOrThrow(Long id) {
         return permissionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Permissão não encontrada com id: " + id));
-    }
-
-    private PermissionDTO toDTO(Permission permission) {
-        return PermissionDTO.builder()
-                .id(permission.getId())
-                .description(permission.getDescription())
-                .build();
-    }
-
-    private Permission toEntity(PermissionDTO dto) {
-        return Permission.builder()
-                .description(dto.getDescription())
-                .build();
     }
 }
 

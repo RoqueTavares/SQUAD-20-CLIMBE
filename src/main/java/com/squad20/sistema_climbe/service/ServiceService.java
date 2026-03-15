@@ -1,10 +1,13 @@
 package com.squad20.sistema_climbe.service;
 
 import com.squad20.sistema_climbe.entity.OfferedService;
-import com.squad20.sistema_climbe.entityDTO.ServiceDTO;
+import com.squad20.sistema_climbe.dto.ServiceDTO;
 import com.squad20.sistema_climbe.exception.ResourceNotFoundException;
+import com.squad20.sistema_climbe.mapper.OfferedServiceMapper;
 import com.squad20.sistema_climbe.repository.ServiceRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,25 +18,24 @@ import java.util.List;
 public class ServiceService {
 
     private final ServiceRepository serviceRepository;
+    private final OfferedServiceMapper offeredServiceMapper;
 
     @Transactional(readOnly = true)
-    public List<ServiceDTO> findAll() {
-        return serviceRepository.findAll().stream()
-                .map(this::toDTO)
-                .toList();
+    public Page<ServiceDTO> findAll(Pageable pageable) {
+        return serviceRepository.findAll(pageable).map(offeredServiceMapper::toDTO);
     }
 
     @Transactional(readOnly = true)
     public ServiceDTO findById(Long id) {
         OfferedService entity = findServiceOrThrow(id);
-        return toDTO(entity);
+        return offeredServiceMapper.toDTO(entity);
     }
 
     @Transactional
     public ServiceDTO save(ServiceDTO dto) {
-        OfferedService entity = toEntity(dto);
+        OfferedService entity = offeredServiceMapper.toEntity(dto);
         entity = serviceRepository.save(entity);
-        return toDTO(entity);
+        return offeredServiceMapper.toDTO(entity);
     }
 
     @Transactional
@@ -41,7 +43,7 @@ public class ServiceService {
         OfferedService entity = findServiceOrThrow(id);
         if (dto.getName() != null) entity.setName(dto.getName());
         entity = serviceRepository.save(entity);
-        return toDTO(entity);
+        return offeredServiceMapper.toDTO(entity);
     }
 
     @Transactional
@@ -53,19 +55,6 @@ public class ServiceService {
     private OfferedService findServiceOrThrow(Long id) {
         return serviceRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Serviço não encontrado com id: " + id));
-    }
-
-    private ServiceDTO toDTO(OfferedService entity) {
-        return ServiceDTO.builder()
-                .id(entity.getId())
-                .name(entity.getName())
-                .build();
-    }
-
-    private OfferedService toEntity(ServiceDTO dto) {
-        OfferedService entity = new OfferedService();
-        entity.setName(dto.getName());
-        return entity;
     }
 }
 

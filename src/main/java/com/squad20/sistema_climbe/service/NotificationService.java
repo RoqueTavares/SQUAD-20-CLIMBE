@@ -2,11 +2,14 @@ package com.squad20.sistema_climbe.service;
 
 import com.squad20.sistema_climbe.entity.Notification;
 import com.squad20.sistema_climbe.entity.User;
-import com.squad20.sistema_climbe.entityDTO.NotificationDTO;
+import com.squad20.sistema_climbe.dto.NotificationDTO;
 import com.squad20.sistema_climbe.exception.ResourceNotFoundException;
+import com.squad20.sistema_climbe.mapper.NotificationMapper;
 import com.squad20.sistema_climbe.repository.NotificationRepository;
 import com.squad20.sistema_climbe.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,37 +22,37 @@ public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
+    private final NotificationMapper notificationMapper;
 
     @Transactional(readOnly = true)
-    public List<NotificationDTO> findAll() {
-        return notificationRepository.findAll().stream()
-                .map(this::toDTO)
-                .toList();
+    public Page<NotificationDTO> findAll(Pageable pageable) {
+        return notificationRepository.findAll(pageable).map(notificationMapper::toDTO);
     }
 
     @Transactional(readOnly = true)
     public List<NotificationDTO> findByUserId(Long userId) {
         return notificationRepository.findByUser_Id(userId).stream()
-                .map(this::toDTO)
+                .map(notificationMapper::toDTO)
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public NotificationDTO findById(Long id) {
         Notification notification = findNotificationOrThrow(id);
-        return toDTO(notification);
+        return notificationMapper.toDTO(notification);
     }
 
     @Transactional
     public NotificationDTO save(NotificationDTO dto) {
         User user = userRepository.findById(dto.getUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado com id: " + dto.getUserId()));
-        Notification notification = toEntity(dto, user);
+        Notification notification = notificationMapper.toEntity(dto);
+        notification.setUser(user);
         if (notification.getSentAt() == null) {
             notification.setSentAt(LocalDateTime.now());
         }
         notification = notificationRepository.save(notification);
-        return toDTO(notification);
+        return notificationMapper.toDTO(notification);
     }
 
     @Transactional
@@ -64,7 +67,7 @@ public class NotificationService {
             existing.setUser(user);
         }
         existing = notificationRepository.save(existing);
-        return toDTO(existing);
+        return notificationMapper.toDTO(existing);
     }
 
     @Transactional
@@ -76,27 +79,5 @@ public class NotificationService {
     private Notification findNotificationOrThrow(Long id) {
         return notificationRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Notificação não encontrada com id: " + id));
-    }
-
-    private NotificationDTO toDTO(Notification n) {
-        Long userId = n.getUser() != null ? n.getUser().getId() : null;
-        String userName = n.getUser() != null ? n.getUser().getFullName() : null;
-        return NotificationDTO.builder()
-                .id(n.getId())
-                .userId(userId)
-                .userName(userName)
-                .message(n.getMessage())
-                .sentAt(n.getSentAt())
-                .type(n.getType())
-                .build();
-    }
-
-    private Notification toEntity(NotificationDTO dto, User user) {
-        return Notification.builder()
-                .user(user)
-                .message(dto.getMessage())
-                .sentAt(dto.getSentAt())
-                .type(dto.getType())
-                .build();
     }
 }

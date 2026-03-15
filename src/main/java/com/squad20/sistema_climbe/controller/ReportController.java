@@ -1,12 +1,14 @@
 package com.squad20.sistema_climbe.controller;
 
-import com.squad20.sistema_climbe.entityDTO.ReportDTO;
+import com.squad20.sistema_climbe.dto.ReportDTO;
 import com.squad20.sistema_climbe.service.ReportService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,15 +19,14 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/reports")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class ReportController {
 
     private final ReportService reportService;
 
-    @Operation(summary = "Listar relatórios", description = "Retorna todos os relatórios")
+    @Operation(summary = "Listar relatórios", description = "Retorna relatórios paginados (page, size, sort)")
     @GetMapping
-    public ResponseEntity<List<ReportDTO>> findAll() {
-        return ResponseEntity.ok(reportService.findAll());
+    public ResponseEntity<Page<ReportDTO>> findAll(Pageable pageable) {
+        return ResponseEntity.ok(reportService.findAll(pageable));
     }
 
     @Operation(summary = "Listar por contrato", description = "Retorna os relatórios do contrato informado")

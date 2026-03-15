@@ -1,11 +1,13 @@
 package com.squad20.sistema_climbe.controller;
 
-import com.squad20.sistema_climbe.entityDTO.CargoDTO;
+import com.squad20.sistema_climbe.dto.CargoDTO;
 import com.squad20.sistema_climbe.service.CargoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,15 +19,14 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/roles")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class CargoController {
 
     private final CargoService cargoService;
 
-    @Operation(summary = "Listar cargos", description = "Retorna todos os cargos cadastrados")
+    @Operation(summary = "Listar cargos", description = "Retorna cargos paginados (page, size, sort)")
     @GetMapping
-    public ResponseEntity<List<CargoDTO>> findAll() {
-        return ResponseEntity.ok(cargoService.findAll());
+    public ResponseEntity<Page<CargoDTO>> findAll(Pageable pageable) {
+        return ResponseEntity.ok(cargoService.findAll(pageable));
     }
 
     @Operation(summary = "Buscar por ID", description = "Retorna um cargo pelo identificador")

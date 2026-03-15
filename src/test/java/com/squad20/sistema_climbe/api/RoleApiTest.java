@@ -10,11 +10,11 @@ class RoleApiTest extends ApiTestBase {
 
     @Override
     protected String getMinimalPostBody() {
-        return "{\"name\":\"Cargo Test\"}";
+        return "{\"name\":\"Cargo Test " + System.nanoTime() + "\"}";
     }
 
     @Override
     protected String getPatchBody() {
-        return "{\"name\":\"Cargo Atualizado\"}";
+        return "{\"name\":\"Cargo Atualizado " + System.nanoTime() + "\"}";
     }
 }

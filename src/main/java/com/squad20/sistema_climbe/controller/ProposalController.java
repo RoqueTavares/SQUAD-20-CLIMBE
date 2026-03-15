@@ -1,12 +1,14 @@
 package com.squad20.sistema_climbe.controller;
 
-import com.squad20.sistema_climbe.entityDTO.ProposalDTO;
+import com.squad20.sistema_climbe.dto.ProposalDTO;
 import com.squad20.sistema_climbe.service.ProposalService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,15 +19,14 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/proposals")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class ProposalController {
 
     private final ProposalService proposalService;
 
-    @Operation(summary = "Listar propostas", description = "Retorna todas as propostas")
+    @Operation(summary = "Listar propostas", description = "Retorna propostas paginadas (page, size, sort)")
     @GetMapping
-    public ResponseEntity<List<ProposalDTO>> findAll() {
-        return ResponseEntity.ok(proposalService.findAll());
+    public ResponseEntity<Page<ProposalDTO>> findAll(Pageable pageable) {
+        return ResponseEntity.ok(proposalService.findAll(pageable));
     }
 
     @Operation(summary = "Listar por empresa", description = "Retorna as propostas da empresa informada")

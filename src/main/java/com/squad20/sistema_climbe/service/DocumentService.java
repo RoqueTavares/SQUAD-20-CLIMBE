@@ -3,12 +3,15 @@ package com.squad20.sistema_climbe.service;
 import com.squad20.sistema_climbe.entity.Document;
 import com.squad20.sistema_climbe.entity.Enterprise;
 import com.squad20.sistema_climbe.entity.User;
-import com.squad20.sistema_climbe.entityDTO.DocumentDTO;
+import com.squad20.sistema_climbe.dto.DocumentDTO;
 import com.squad20.sistema_climbe.exception.ResourceNotFoundException;
+import com.squad20.sistema_climbe.mapper.DocumentMapper;
 import com.squad20.sistema_climbe.repository.DocumentRepository;
 import com.squad20.sistema_climbe.repository.EnterpriseRepository;
 import com.squad20.sistema_climbe.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,32 +24,31 @@ public class DocumentService {
     private final DocumentRepository documentRepository;
     private final EnterpriseRepository enterpriseRepository;
     private final UserRepository userRepository;
+    private final DocumentMapper documentMapper;
 
     @Transactional(readOnly = true)
-    public List<DocumentDTO> findAll() {
-        return documentRepository.findAll().stream()
-                .map(this::toDTO)
-                .toList();
+    public Page<DocumentDTO> findAll(Pageable pageable) {
+        return documentRepository.findAll(pageable).map(documentMapper::toDTO);
     }
 
     @Transactional(readOnly = true)
     public List<DocumentDTO> findByEnterpriseId(Long enterpriseId) {
         return documentRepository.findByEnterprise_Id(enterpriseId).stream()
-                .map(this::toDTO)
+                .map(documentMapper::toDTO)
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public List<DocumentDTO> findByAnalystId(Long analystId) {
         return documentRepository.findByAnalyst_Id(analystId).stream()
-                .map(this::toDTO)
+                .map(documentMapper::toDTO)
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public DocumentDTO findById(Long id) {
         Document document = findDocumentOrThrow(id);
-        return toDTO(document);
+        return documentMapper.toDTO(document);
     }
 
     @Transactional
@@ -57,9 +59,11 @@ public class DocumentService {
                 ? userRepository.findById(dto.getAnalystId())
                     .orElseThrow(() -> new ResourceNotFoundException("Analista não encontrado com id: " + dto.getAnalystId()))
                 : null;
-        Document document = toEntity(dto, enterprise, analyst);
+        Document document = documentMapper.toEntity(dto);
+        document.setEnterprise(enterprise);
+        document.setAnalyst(analyst);
         document = documentRepository.save(document);
-        return toDTO(document);
+        return documentMapper.toDTO(document);
     }
 
     @Transactional
@@ -81,7 +85,7 @@ public class DocumentService {
             existing.setAnalyst(null);
         }
         existing = documentRepository.save(existing);
-        return toDTO(existing);
+        return documentMapper.toDTO(existing);
     }
 
     @Transactional
@@ -93,35 +97,5 @@ public class DocumentService {
     private Document findDocumentOrThrow(Long id) {
         return documentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Documento não encontrado com id: " + id));
-    }
-
-    private DocumentDTO toDTO(Document d) {
-        Long enterpriseId = null;
-        String enterpriseName = null;
-        if (d.getEnterprise() != null) {
-            enterpriseId = d.getEnterprise().getId();
-            enterpriseName = d.getEnterprise().getTradeName() != null
-                    ? d.getEnterprise().getTradeName() : d.getEnterprise().getLegalName();
-        }
-        return DocumentDTO.builder()
-                .id(d.getId())
-                .enterpriseId(enterpriseId)
-                .enterpriseName(enterpriseName)
-                .documentType(d.getDocumentType())
-                .url(d.getUrl())
-                .validated(d.getValidated())
-                .analystId(d.getAnalyst() != null ? d.getAnalyst().getId() : null)
-                .analystName(d.getAnalyst() != null ? d.getAnalyst().getFullName() : null)
-                .build();
-    }
-
-    private Document toEntity(DocumentDTO dto, Enterprise enterprise, User analyst) {
-        return Document.builder()
-                .enterprise(enterprise)
-                .documentType(dto.getDocumentType())
-                .url(dto.getUrl())
-                .validated(dto.getValidated())
-                .analyst(analyst)
-                .build();
     }
 }
