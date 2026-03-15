@@ -1,11 +1,15 @@
 package com.squad20.sistema_climbe.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 
 @Entity
 @Table(name = "servicos")
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class OfferedService {
 
     @Id
@@ -16,4 +20,3 @@ public class OfferedService {
     @Column(name = "nome", nullable = false, length = 255)
     private String name;
 }
-

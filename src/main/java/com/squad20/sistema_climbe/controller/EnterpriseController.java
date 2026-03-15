@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
 import java.util.List;
 
 @Tag(name = "Empresas", description = "Cadastro e consulta de empresas")
@@ -50,9 +51,8 @@ public class EnterpriseController {
 
     @Operation(summary = "Criar empresa", description = "Cadastra uma nova empresa")
     @PostMapping
-    public ResponseEntity<EnterpriseDTO> save(@RequestBody EnterpriseDTO dto) {
-        EnterpriseDTO saved = enterpriseService.save(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+    public ResponseEntity<EnterpriseDTO> save(@Valid @RequestBody EnterpriseDTO dto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(enterpriseService.save(dto));
     }
 
     @Operation(summary = "Atualizar empresa", description = "Atualiza uma empresa existente (parcial)")
@@ -60,7 +60,14 @@ public class EnterpriseController {
     public ResponseEntity<EnterpriseDTO> update(
             @Parameter(description = "ID da empresa") @PathVariable Long id,
             @RequestBody EnterpriseDTO dto) {
-        EnterpriseDTO updated = enterpriseService.update(id, dto);
-        return ResponseEntity.ok(updated);
+        return ResponseEntity.ok(enterpriseService.update(id, dto));
+    }
+
+    @Operation(summary = "Excluir empresa", description = "Remove uma empresa pelo ID")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(
+            @Parameter(description = "ID da empresa") @PathVariable Long id) {
+        enterpriseService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 }
