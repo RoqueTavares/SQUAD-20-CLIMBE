@@ -1,32 +1,56 @@
 package com.squad20.sistema_climbe.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 
-import java.io.Serializable;
+import java.util.Set;
 
 @Entity
-@Table(name = "tb_enterprise")
-@Data
-public class Enterprise implements Serializable {
-    private static final long serialVersionUID = 1L;
+@Table(name = "empresas")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class Enterprise {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private int id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_empresa")
+    private Long id;
 
-    private String razao_social;
-    private String nome_fantasia;
+    @Column(name = "razao_social", nullable = false)
+    private String legalName;
+
+    @Column(name = "nome_fantasia")
+    private String tradeName;
+
+    @Column(unique = true, nullable = false)
     private String cnpj;
-    private String logradouro;
-    private int numero;
-    private String bairro;
-    private String cidade;
-    private String uf;
-    private String cep;
-    private String telefone;
+
+    @Embedded
+    private Address address;
+
+    @Column(name = "telefone")
+    private String phone;
+
+    @Column(unique = true, nullable = false)
     private String email;
-    private String representante_nome;
-    private String representante_cnpj;
-    private String representante_contato;
+
+    @Column(name = "representante_nome")
+    private String representativeName;
+
+    @Column(name = "representante_cpf", length = 14)
+    private String representativeCpf;
+
+    @Column(name = "representante_contato")
+    private String representativePhone;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "empresa_servico",
+            joinColumns = @JoinColumn(name = "id_empresa"),
+            inverseJoinColumns = @JoinColumn(name = "id_servico")
+    )
+    private Set<OfferedService> services;
 }

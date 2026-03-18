@@ -1,47 +1,51 @@
-package com.squad20.sistema_climbe.entityDTO;
+package com.squad20.sistema_climbe.dto;
 
-import com.squad20.sistema_climbe.entity.Enterprise;
-import lombok.Data;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+import lombok.*;
 
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class EnterpriseDTO {
 
-    private int id;
+    private Long id;
 
-    private String razao_social;
-    private String nome_fantasia;
+    @NotBlank(message = "Razão social é obrigatória")
+    @Size(max = 255)
+    private String legalName;
+
+    @Size(max = 255)
+    private String tradeName;
+
+    @NotBlank(message = "CNPJ é obrigatório")
+    @Pattern(regexp = "\\d{2}\\.?\\d{3}\\.?\\d{3}/?\\d{4}-?\\d{2}", message = "CNPJ inválido")
+    @Size(max = 18)
     private String cnpj;
-    private String logradouro;
-    private int numero;
-    private String bairro;
-    private String cidade;
-    private String uf;
-    private String cep;
-    private String telefone;
+
+    @Valid
+    private AddressDTO address;
+
+    @Size(max = 50)
+    private String phone;
+
+    @NotBlank(message = "E-mail é obrigatório")
+    @Email(message = "E-mail inválido")
+    @Size(max = 255)
     private String email;
-    private String representante_nome;
-    private String representante_cnpj;
-    private String representante_contato;
 
-    public EnterpriseDTO() {}
+    @Size(max = 255)
+    private String representativeName;
 
-    public EnterpriseDTO(Enterprise enterprise) {
-        this.id = enterprise.getId();
-        this.razao_social = enterprise.getRazao_social();
-        this.nome_fantasia = enterprise.getNome_fantasia();
-        this.cnpj = enterprise.getCnpj();
-        this.logradouro = enterprise.getLogradouro();
-        this.numero = enterprise.getNumero();
-        this.bairro = enterprise.getBairro();
-        this.cidade = enterprise.getCidade();
-        this.uf = enterprise.getUf();
-        this.cep = enterprise.getCep();
-        this.telefone = enterprise.getTelefone();
-        this.email = enterprise.getEmail();
-        this.representante_nome = enterprise.getRepresentante_nome();
-        this.representante_cnpj = enterprise.getRepresentante_cnpj();
-        this.representante_contato = enterprise.getRepresentante_contato();
-    }
+    @Pattern(regexp = "\\d{3}\\.?\\d{3}\\.?\\d{3}-?\\d{2}", message = "CPF do representante inválido")
+    @Size(max = 14)
+    private String representativeCpf;
 
-
+    @Size(max = 50)
+    private String representativePhone;
 }
