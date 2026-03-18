@@ -1,12 +1,9 @@
 package com.squad20.sistema_climbe.service;
 
 import com.squad20.sistema_climbe.entity.Enterprise;
-import com.squad20.sistema_climbe.entity.User;
 import com.squad20.sistema_climbe.entityDTO.EnterpriseDTO;
-import com.squad20.sistema_climbe.entityDTO.UserDTO;
 import com.squad20.sistema_climbe.repository.EnterpriseRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
