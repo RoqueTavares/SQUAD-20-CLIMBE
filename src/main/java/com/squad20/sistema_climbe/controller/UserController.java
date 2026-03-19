@@ -50,12 +50,7 @@ public class UserController {
         return ResponseEntity.ok(userService.findByCpf(cpf));
     }
 
-    @Operation(summary = "Buscar por cargo", description = "Retorna os usuários do cargo informado")
-    @GetMapping("/role/{roleId}")
-    public ResponseEntity<List<UserDTO>> findByRoleId(
-            @Parameter(description = "ID do cargo") @PathVariable Long roleId) {
-        return ResponseEntity.ok(userService.findByRoleId(roleId));
-    }
+
 
     @Operation(summary = "Criar usuário", description = "Cadastra um novo usuário")
     @PostMapping

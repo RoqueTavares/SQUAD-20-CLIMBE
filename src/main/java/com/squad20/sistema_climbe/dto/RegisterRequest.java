@@ -36,7 +36,4 @@ public class RegisterRequest {
 
     @Size(max = 50)
     private String phone;
-
-    @NotNull(message = "Cargo é obrigatório")
-    private Long roleId;
 }

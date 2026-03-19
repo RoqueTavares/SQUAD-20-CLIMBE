@@ -27,9 +27,7 @@ public class User implements UserDetails {
     @Column(name = "nome_completo", nullable = false, length = 255)
     private String fullName;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cargo_id", nullable = false)
-    private Cargo role;
+
 
     @Column(unique = true, nullable = false, length = 14)
     private String cpf;

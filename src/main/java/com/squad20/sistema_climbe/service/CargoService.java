@@ -34,6 +34,7 @@ public class CargoService {
     @Transactional
     public CargoDTO save(CargoDTO dto) {
         Cargo role = cargoMapper.toEntity(dto);
+        role.setId(null); // Garante que seja um insert novo e não um update
         role = cargoRepository.save(role);
         return cargoMapper.toDTO(role);
     }
@@ -56,4 +57,5 @@ public class CargoService {
         return cargoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Cargo não encontrado com id: " + id));
     }
+    
 }

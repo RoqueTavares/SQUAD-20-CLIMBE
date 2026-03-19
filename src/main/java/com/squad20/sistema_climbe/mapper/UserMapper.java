@@ -9,11 +9,9 @@ import org.mapstruct.MappingConstants;
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
 public interface UserMapper {
 
-    @Mapping(source = "role.id", target = "roleId")
-    @Mapping(source = "role.name", target = "roleName")
     UserDTO toDTO(User user);
 
-    @Mapping(target = "role", ignore = true)
+
     @Mapping(target = "passwordHash", ignore = true)
     @Mapping(target = "permissions", ignore = true)
     User toEntity(UserDTO dto);
