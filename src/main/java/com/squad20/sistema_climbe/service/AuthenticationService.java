@@ -3,8 +3,12 @@ import com.squad20.sistema_climbe.entity.User;
 import com.squad20.sistema_climbe.dto.AuthenticationRequest;
 import com.squad20.sistema_climbe.dto.AuthenticationResponse;
 import com.squad20.sistema_climbe.dto.RegisterRequest;
+import com.squad20.sistema_climbe.dto.TokenRefreshRequest;
+import com.squad20.sistema_climbe.dto.TokenRefreshResponse;
 import com.squad20.sistema_climbe.exception.ConflictException;
 import com.squad20.sistema_climbe.exception.ResourceNotFoundException;
+import com.squad20.sistema_climbe.exception.TokenRefreshException;
+import com.squad20.sistema_climbe.entity.RefreshToken;
 import com.squad20.sistema_climbe.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -21,6 +25,7 @@ public class AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+    private final RefreshTokenService refreshTokenService;
 
     public AuthenticationResponse register(RegisterRequest request) {
 
@@ -41,9 +46,11 @@ public class AuthenticationService {
 
         repository.save(user);
         var jwtToken = jwtService.generateToken(user);
+        var refreshToken = refreshTokenService.createRefreshToken(user.getId());
 
         return AuthenticationResponse.builder()
                 .token(jwtToken)
+                .refreshToken(refreshToken.getToken())
                 .build();
     }
 
@@ -60,8 +67,25 @@ public class AuthenticationService {
 
         var jwtToken = jwtService.generateToken(user);
 
+        refreshTokenService.deleteByUserId(user.getId());
+        var refreshToken = refreshTokenService.createRefreshToken(user.getId());
+
         return AuthenticationResponse.builder()
                 .token(jwtToken)
+                .refreshToken(refreshToken.getToken())
                 .build();
+    }
+
+    public TokenRefreshResponse refreshToken(String refreshToken) {
+        return refreshTokenService.findByToken(refreshToken)
+                .map(refreshTokenService::verifyExpiration)
+                .map(RefreshToken::getUser)
+                .map(user -> {
+                    String token = jwtService.generateToken(user);
+                    return TokenRefreshResponse.builder()
+                            .accessToken(token)
+                            .build();
+                })
+                .orElseThrow(() -> new TokenRefreshException("Refresh token não encontrado no banco."));
     }
 }

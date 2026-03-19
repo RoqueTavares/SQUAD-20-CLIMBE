@@ -9,10 +9,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class AuthenticationResponse {
+public class TokenRefreshResponse {
     @com.fasterxml.jackson.annotation.JsonIgnore
-    private String token;
-
-    @com.fasterxml.jackson.annotation.JsonIgnore
-    private String refreshToken;
+    private String accessToken;
 }
