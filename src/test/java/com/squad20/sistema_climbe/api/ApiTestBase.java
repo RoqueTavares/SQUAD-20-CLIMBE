@@ -7,10 +7,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -107,4 +109,105 @@ abstract class ApiTestBase {
         java.util.regex.Matcher m = java.util.regex.Pattern.compile("\"id\"\\s*:\\s*(\\d+)").matcher(json);
         return m.find() ? m.group(1) : null;
     }
+
+    protected String createEnterprise() throws Exception {
+        long n = Math.abs(System.nanoTime());
+        String filial = String.format("%04d", n % 10000);
+        String dv = String.format("%02d", (n / 10000) % 100);
+
+        String body = "{\"legalName\":\"Empresa Test Ltda\",\"tradeName\":\"Empresa " + n
+                + "\",\"cnpj\":\"12.345.678/" + filial + "-" + dv
+                + "\",\"email\":\"empresa" + n + "@teste.com\"}";
+
+        return createResource("/api/enterprises", body);
+    }
+
+    protected UserFixture createUser() throws Exception {
+        long n = Math.abs(System.nanoTime());
+        String email = "user" + n + "@teste.com";
+        String cpf = generateValidCpf(n);
+        String body = "{\"fullName\":\"Usuario Teste " + n + "\",\"cpf\":\"" + cpf
+                + "\",\"email\":\"" + email + "\"}";
+
+        String id = createResource("/api/users", body);
+        return new UserFixture(id, email, cpf);
+    }
+
+    protected ProposalFixture createProposal() throws Exception {
+        String enterpriseId = createEnterprise();
+        UserFixture user = createUser();
+        long n = Math.abs(System.nanoTime());
+        String body = "{\"enterpriseId\":" + enterpriseId + ",\"userId\":" + user.id()
+                + ",\"status\":\"ABERTA\",\"createdAt\":\"2026-03-20T10:15:30\"}";
+
+        String proposalId = createResource("/api/proposals", body);
+        return new ProposalFixture(proposalId, enterpriseId, user.id());
+    }
+
+    protected ContractFixture createContract() throws Exception {
+        ProposalFixture proposal = createProposal();
+        String body = "{\"proposalId\":" + proposal.id()
+                + ",\"startDate\":\"2026-03-20\",\"endDate\":\"2026-12-20\",\"status\":\"ATIVO\"}";
+
+        String contractId = createResource("/api/contracts", body);
+        return new ContractFixture(contractId, proposal.id(), proposal.enterpriseId(), proposal.userId());
+    }
+
+    protected String createResource(String path, String body) throws Exception {
+        MvcResult result = mockMvc.perform(post(path)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        String id = extractIdFromJson(result.getResponse().getContentAsString());
+        if (id == null) {
+            throw new AssertionError("Nao foi possivel extrair o id de " + path);
+        }
+        return id;
+    }
+
+    protected String extractCookie(MvcResult result, String cookieName) {
+        jakarta.servlet.http.Cookie cookie = result.getResponse().getCookie(cookieName);
+        if (cookie == null) {
+            throw new AssertionError("Cookie nao encontrado: " + cookieName);
+        }
+        return cookie.getValue();
+    }
+
+    protected static String generateValidCpf(long seed) {
+        int[] digits = new int[11];
+        long value = seed;
+
+        for (int i = 0; i < 9; i++) {
+            digits[i] = (int) (value % 10);
+            value /= 10;
+        }
+
+        int sum = 0;
+        for (int i = 0; i < 9; i++) {
+            sum += digits[i] * (10 - i);
+        }
+        int remainder = sum % 11;
+        digits[9] = remainder < 2 ? 0 : 11 - remainder;
+
+        sum = 0;
+        for (int i = 0; i < 10; i++) {
+            sum += digits[i] * (11 - i);
+        }
+        remainder = sum % 11;
+        digits[10] = remainder < 2 ? 0 : 11 - remainder;
+
+        StringBuilder cpf = new StringBuilder(11);
+        for (int digit : digits) {
+            cpf.append(digit);
+        }
+        return cpf.toString();
+    }
+
+    protected record UserFixture(String id, String email, String cpf) {}
+
+    protected record ProposalFixture(String id, String enterpriseId, String userId) {}
+
+    protected record ContractFixture(String id, String proposalId, String enterpriseId, String userId) {}
 }

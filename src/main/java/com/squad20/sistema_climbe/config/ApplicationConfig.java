@@ -1,6 +1,6 @@
 package com.squad20.sistema_climbe.config;
 
-import com.squad20.sistema_climbe.repository.UserRepository;
+import com.squad20.sistema_climbe.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

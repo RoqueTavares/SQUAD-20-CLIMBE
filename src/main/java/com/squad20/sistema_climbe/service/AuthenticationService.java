@@ -1,5 +1,4 @@
 package com.squad20.sistema_climbe.service;
-import com.squad20.sistema_climbe.entity.User;
 import com.squad20.sistema_climbe.dto.AuthenticationRequest;
 import com.squad20.sistema_climbe.dto.AuthenticationResponse;
 import com.squad20.sistema_climbe.dto.RegisterRequest;
@@ -8,8 +7,10 @@ import com.squad20.sistema_climbe.dto.TokenRefreshResponse;
 import com.squad20.sistema_climbe.exception.ConflictException;
 import com.squad20.sistema_climbe.exception.ResourceNotFoundException;
 import com.squad20.sistema_climbe.exception.TokenRefreshException;
-import com.squad20.sistema_climbe.entity.RefreshToken;
-import com.squad20.sistema_climbe.repository.UserRepository;
+import com.squad20.sistema_climbe.domain.user.entity.User;
+import com.squad20.sistema_climbe.domain.user.repository.UserRepository;
+import com.squad20.sistema_climbe.domain.security.entity.RefreshToken;
+import com.squad20.sistema_climbe.domain.security.service.RefreshTokenService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
