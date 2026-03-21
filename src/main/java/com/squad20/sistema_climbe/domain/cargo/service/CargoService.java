@@ -1,5 +1,7 @@
 package com.squad20.sistema_climbe.domain.cargo.service;
 
+import com.squad20.sistema_climbe.domain.cargo.dto.CargoCreateRequest;
+import com.squad20.sistema_climbe.domain.cargo.dto.CargoPatchRequest;
 import com.squad20.sistema_climbe.domain.cargo.entity.Cargo;
 import com.squad20.sistema_climbe.domain.cargo.dto.CargoDTO;
 import com.squad20.sistema_climbe.domain.cargo.mapper.CargoMapper;
@@ -30,17 +32,19 @@ public class CargoService {
     }
 
     @Transactional
-    public CargoDTO save(CargoDTO dto) {
-        Cargo role = cargoMapper.toEntity(dto);
-        role.setId(null); // Garante que seja um insert novo e não um update
+    public CargoDTO save(CargoCreateRequest request) {
+        Cargo role = cargoMapper.toEntity(request);
+        role.setId(null); 
         role = cargoRepository.save(role);
         return cargoMapper.toDTO(role);
     }
 
     @Transactional
-    public CargoDTO update(Long id, CargoDTO dto) {
+    public CargoDTO update(Long id, CargoPatchRequest patch) {
         Cargo role = findRoleOrThrow(id);
-        if (dto.getName() != null) role.setName(dto.getName());
+        if (patch.getName() != null) {
+            role.setName(patch.getName());
+        }
         role = cargoRepository.save(role);
         return cargoMapper.toDTO(role);
     }

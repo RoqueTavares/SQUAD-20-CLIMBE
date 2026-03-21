@@ -1,5 +1,7 @@
 package com.squad20.sistema_climbe.domain.cargo.controller;
 
+import com.squad20.sistema_climbe.domain.cargo.dto.CargoCreateRequest;
+import com.squad20.sistema_climbe.domain.cargo.dto.CargoPatchRequest;
 import com.squad20.sistema_climbe.domain.cargo.dto.CargoDTO;
 import com.squad20.sistema_climbe.domain.cargo.service.CargoService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -37,16 +39,16 @@ public class CargoController {
 
     @Operation(summary = "Criar cargo", description = "Cadastra um novo cargo")
     @PostMapping
-    public ResponseEntity<CargoDTO> save(@Valid @RequestBody CargoDTO dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(cargoService.save(dto));
+    public ResponseEntity<CargoDTO> save(@Valid @RequestBody CargoCreateRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(cargoService.save(request));
     }
 
     @Operation(summary = "Atualizar cargo", description = "Atualiza um cargo existente (parcial)")
     @PatchMapping("/{id}")
     public ResponseEntity<CargoDTO> update(
             @Parameter(description = "ID do cargo") @PathVariable Long id,
-            @RequestBody CargoDTO dto) {
-        return ResponseEntity.ok(cargoService.update(id, dto));
+            @Valid @RequestBody CargoPatchRequest patch) {
+        return ResponseEntity.ok(cargoService.update(id, patch));
     }
 
     @Operation(summary = "Excluir cargo", description = "Remove um cargo pelo ID")
