@@ -16,3 +16,9 @@ jwt.refresh-expiration-ms=604800000
 
 springdoc.api-docs.path=/v3/api-docs
 springdoc.swagger-ui.path=/swagger-ui.html
+
+#OAUTH config
+
+spring.security.oauth2.client.registration.google.client-id=SEU_CLIENT_ID
+spring.security.oauth2.client.registration.google.client-secret=SEU_CLIENT_SECRET_AQUI
+spring.security.oauth2.client.registration.google.scope=profile,email

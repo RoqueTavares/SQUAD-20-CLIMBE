@@ -18,6 +18,7 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final AuthenticationProvider authenticationProvider;
+    private final CustomOAuth2SuccessHandler customOAuth2SuccessHandler;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -28,9 +29,13 @@ public class SecurityConfig {
                                 "/api/auth/**", 
                                 "/v3/api-docs/**", 
                                 "/swagger-ui/**", 
-                                "/swagger-ui.html"
+                                "/swagger-ui.html",
+                                "/login/oauth2/**" 
                         ).permitAll()
                         .anyRequest().authenticated()
+                )
+                .oauth2Login(oauth2 -> oauth2
+                        .successHandler(customOAuth2SuccessHandler)
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider)
