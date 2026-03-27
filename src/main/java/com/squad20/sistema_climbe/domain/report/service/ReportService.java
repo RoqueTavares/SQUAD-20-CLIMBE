@@ -1,6 +1,8 @@
 package com.squad20.sistema_climbe.domain.report.service;
 
+import com.squad20.sistema_climbe.domain.report.dto.ReportCreateRequest;
 import com.squad20.sistema_climbe.domain.report.dto.ReportDTO;
+import com.squad20.sistema_climbe.domain.report.dto.ReportPatchRequest;
 import com.squad20.sistema_climbe.domain.report.entity.Report;
 import com.squad20.sistema_climbe.domain.report.mapper.ReportMapper;
 import com.squad20.sistema_climbe.domain.report.repository.ReportRepository;
@@ -42,26 +44,27 @@ public class ReportService {
     }
 
     @Transactional
-    public ReportDTO save(ReportDTO dto) {
-        Contract contract = contractRepository.findById(dto.getContractId())
-                .orElseThrow(() -> new ResourceNotFoundException("Contrato não encontrado com id: " + dto.getContractId()));
+    public ReportDTO save(ReportCreateRequest request) {
+        Contract contract = contractRepository.findById(request.getContractId())
+                .orElseThrow(() -> new ResourceNotFoundException("Contrato não encontrado com id: " + request.getContractId()));
 
-        Report report = reportMapper.toEntity(dto);
+        Report report = reportMapper.toEntity(request);
+        report.setId(null);
         report.setContract(contract);
         report = reportRepository.save(report);
         return reportMapper.toDTO(report);
     }
 
     @Transactional
-    public ReportDTO update(Long id, ReportDTO dto) {
+    public ReportDTO update(Long id, ReportPatchRequest patch) {
         Report existing = findReportOrThrow(id);
 
-        if (dto.getPdfUrl() != null) existing.setPdfUrl(dto.getPdfUrl());
-        if (dto.getSentAt() != null) existing.setSentAt(dto.getSentAt());
+        if (patch.getPdfUrl() != null) existing.setPdfUrl(patch.getPdfUrl());
+        if (patch.getSentAt() != null) existing.setSentAt(patch.getSentAt());
 
-        if (dto.getContractId() != null) {
-            Contract contract = contractRepository.findById(dto.getContractId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Contrato não encontrado com id: " + dto.getContractId()));
+        if (patch.getContractId() != null) {
+            Contract contract = contractRepository.findById(patch.getContractId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Contrato não encontrado com id: " + patch.getContractId()));
             existing.setContract(contract);
         }
 

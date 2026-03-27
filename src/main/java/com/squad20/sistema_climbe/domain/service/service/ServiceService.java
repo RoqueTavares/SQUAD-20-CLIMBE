@@ -1,5 +1,7 @@
 package com.squad20.sistema_climbe.domain.service.service;
 
+import com.squad20.sistema_climbe.domain.service.dto.ServiceCreateRequest;
+import com.squad20.sistema_climbe.domain.service.dto.ServicePatchRequest;
 import com.squad20.sistema_climbe.domain.service.entity.OfferedService;
 import com.squad20.sistema_climbe.domain.service.dto.ServiceDTO;
 import com.squad20.sistema_climbe.domain.service.mapper.OfferedServiceMapper;
@@ -30,16 +32,17 @@ public class ServiceService {
     }
 
     @Transactional
-    public ServiceDTO save(ServiceDTO dto) {
-        OfferedService entity = offeredServiceMapper.toEntity(dto);
+    public ServiceDTO save(ServiceCreateRequest request) {
+        OfferedService entity = offeredServiceMapper.toEntity(request);
+        entity.setId(null);
         entity = serviceRepository.save(entity);
         return offeredServiceMapper.toDTO(entity);
     }
 
     @Transactional
-    public ServiceDTO update(Long id, ServiceDTO dto) {
+    public ServiceDTO update(Long id, ServicePatchRequest patch) {
         OfferedService entity = findServiceOrThrow(id);
-        if (dto.getName() != null) entity.setName(dto.getName());
+        if (patch.getName() != null) entity.setName(patch.getName());
         entity = serviceRepository.save(entity);
         return offeredServiceMapper.toDTO(entity);
     }

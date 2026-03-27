@@ -2,7 +2,9 @@ package com.squad20.sistema_climbe.domain.meeting.service;
 
 import com.squad20.sistema_climbe.domain.enterprise.entity.Enterprise;
 import com.squad20.sistema_climbe.domain.enterprise.repository.EnterpriseRepository;
+import com.squad20.sistema_climbe.domain.meeting.dto.MeetingCreateRequest;
 import com.squad20.sistema_climbe.domain.meeting.dto.MeetingDTO;
+import com.squad20.sistema_climbe.domain.meeting.dto.MeetingPatchRequest;
 import com.squad20.sistema_climbe.domain.meeting.entity.Meeting;
 import com.squad20.sistema_climbe.domain.meeting.mapper.MeetingMapper;
 import com.squad20.sistema_climbe.domain.meeting.repository.MeetingRepository;
@@ -47,13 +49,14 @@ public class MeetingService {
     }
 
     @Transactional
-    public MeetingDTO save(MeetingDTO dto) {
-        Enterprise enterprise = enterpriseRepository.findById(dto.getEnterpriseId())
-                .orElseThrow(() -> new ResourceNotFoundException("Empresa não encontrada com id: " + dto.getEnterpriseId()));
+    public MeetingDTO save(MeetingCreateRequest request) {
+        Enterprise enterprise = enterpriseRepository.findById(request.getEnterpriseId())
+                .orElseThrow(() -> new ResourceNotFoundException("Empresa não encontrada com id: " + request.getEnterpriseId()));
 
-        Set<User> participants = resolveParticipants(dto.getParticipantIds());
+        Set<User> participants = resolveParticipants(request.getParticipantIds());
 
-        Meeting meeting = meetingMapper.toEntity(dto);
+        Meeting meeting = meetingMapper.toEntity(request);
+        meeting.setId(null);
         meeting.setEnterprise(enterprise);
         meeting.setParticipants(participants != null ? participants : new HashSet<>());
 
@@ -62,25 +65,25 @@ public class MeetingService {
     }
 
     @Transactional
-    public MeetingDTO update(Long id, MeetingDTO dto) {
+    public MeetingDTO update(Long id, MeetingPatchRequest patch) {
         Meeting existing = findMeetingOrThrow(id);
 
-        if (dto.getTitle() != null) existing.setTitle(dto.getTitle());
-        if (dto.getDate() != null) existing.setDate(dto.getDate());
-        if (dto.getTime() != null) existing.setTime(dto.getTime());
-        if (dto.getInPerson() != null) existing.setInPerson(dto.getInPerson());
-        if (dto.getLocation() != null) existing.setLocation(dto.getLocation());
-        if (dto.getAgenda() != null) existing.setAgenda(dto.getAgenda());
-        if (dto.getStatus() != null) existing.setStatus(dto.getStatus());
+        if (patch.getTitle() != null) existing.setTitle(patch.getTitle());
+        if (patch.getDate() != null) existing.setDate(patch.getDate());
+        if (patch.getTime() != null) existing.setTime(patch.getTime());
+        if (patch.getInPerson() != null) existing.setInPerson(patch.getInPerson());
+        if (patch.getLocation() != null) existing.setLocation(patch.getLocation());
+        if (patch.getAgenda() != null) existing.setAgenda(patch.getAgenda());
+        if (patch.getStatus() != null) existing.setStatus(patch.getStatus());
 
-        if (dto.getEnterpriseId() != null) {
-            Enterprise enterprise = enterpriseRepository.findById(dto.getEnterpriseId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Empresa não encontrada com id: " + dto.getEnterpriseId()));
+        if (patch.getEnterpriseId() != null) {
+            Enterprise enterprise = enterpriseRepository.findById(patch.getEnterpriseId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Empresa não encontrada com id: " + patch.getEnterpriseId()));
             existing.setEnterprise(enterprise);
         }
 
-        if (dto.getParticipantIds() != null) {
-            existing.setParticipants(resolveParticipants(dto.getParticipantIds()));
+        if (patch.getParticipantIds() != null) {
+            existing.setParticipants(resolveParticipants(patch.getParticipantIds()));
         }
 
         existing = meetingRepository.save(existing);

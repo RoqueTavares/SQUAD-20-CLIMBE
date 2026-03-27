@@ -1,6 +1,8 @@
 package com.squad20.sistema_climbe.domain.spreadsheet.service;
 
+import com.squad20.sistema_climbe.domain.spreadsheet.dto.SpreadsheetCreateRequest;
 import com.squad20.sistema_climbe.domain.spreadsheet.dto.SpreadsheetDTO;
+import com.squad20.sistema_climbe.domain.spreadsheet.dto.SpreadsheetPatchRequest;
 import com.squad20.sistema_climbe.domain.spreadsheet.entity.Spreadsheet;
 import com.squad20.sistema_climbe.domain.spreadsheet.mapper.SpreadsheetMapper;
 import com.squad20.sistema_climbe.domain.spreadsheet.repository.SpreadsheetRepository;
@@ -42,27 +44,28 @@ public class SpreadsheetService {
     }
 
     @Transactional
-    public SpreadsheetDTO save(SpreadsheetDTO dto) {
-        Contract contract = contractRepository.findById(dto.getContractId())
-                .orElseThrow(() -> new ResourceNotFoundException("Contrato não encontrado com id: " + dto.getContractId()));
+    public SpreadsheetDTO save(SpreadsheetCreateRequest request) {
+        Contract contract = contractRepository.findById(request.getContractId())
+                .orElseThrow(() -> new ResourceNotFoundException("Contrato não encontrado com id: " + request.getContractId()));
 
-        Spreadsheet spreadsheet = spreadsheetMapper.toEntity(dto);
+        Spreadsheet spreadsheet = spreadsheetMapper.toEntity(request);
+        spreadsheet.setId(null);
         spreadsheet.setContract(contract);
         spreadsheet = spreadsheetRepository.save(spreadsheet);
         return spreadsheetMapper.toDTO(spreadsheet);
     }
 
     @Transactional
-    public SpreadsheetDTO update(Long id, SpreadsheetDTO dto) {
+    public SpreadsheetDTO update(Long id, SpreadsheetPatchRequest patch) {
         Spreadsheet existing = findSpreadsheetOrThrow(id);
 
-        if (dto.getGoogleSheetsUrl() != null) existing.setGoogleSheetsUrl(dto.getGoogleSheetsUrl());
-        if (dto.getLocked() != null) existing.setLocked(dto.getLocked());
-        if (dto.getViewPermission() != null) existing.setViewPermission(dto.getViewPermission());
+        if (patch.getGoogleSheetsUrl() != null) existing.setGoogleSheetsUrl(patch.getGoogleSheetsUrl());
+        if (patch.getLocked() != null) existing.setLocked(patch.getLocked());
+        if (patch.getViewPermission() != null) existing.setViewPermission(patch.getViewPermission());
 
-        if (dto.getContractId() != null) {
-            Contract contract = contractRepository.findById(dto.getContractId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Contrato não encontrado com id: " + dto.getContractId()));
+        if (patch.getContractId() != null) {
+            Contract contract = contractRepository.findById(patch.getContractId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Contrato não encontrado com id: " + patch.getContractId()));
             existing.setContract(contract);
         }
 

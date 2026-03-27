@@ -1,5 +1,7 @@
 package com.squad20.sistema_climbe.domain.user.controller;
 
+import com.squad20.sistema_climbe.domain.user.dto.UserCreateRequest;
+import com.squad20.sistema_climbe.domain.user.dto.UserPatchRequest;
 import com.squad20.sistema_climbe.domain.user.dto.UserDTO;
 import com.squad20.sistema_climbe.domain.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -51,16 +53,16 @@ public class UserController {
 
     @Operation(summary = "Criar usuário", description = "Cadastra um novo usuário")
     @PostMapping
-    public ResponseEntity<UserDTO> save(@Valid @RequestBody UserDTO dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(userService.save(dto));
+    public ResponseEntity<UserDTO> save(@Valid @RequestBody UserCreateRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(userService.save(request));
     }
 
     @Operation(summary = "Atualizar usuário", description = "Atualiza um usuário existente (parcial)")
     @PatchMapping("/{id}")
     public ResponseEntity<UserDTO> update(
             @Parameter(description = "ID do usuário") @PathVariable Long id,
-            @RequestBody UserDTO dto) {
-        return ResponseEntity.ok(userService.update(id, dto));
+            @Valid @RequestBody UserPatchRequest patch) {
+        return ResponseEntity.ok(userService.update(id, patch));
     }
 
     @Operation(summary = "Excluir usuário", description = "Remove um usuário pelo ID")

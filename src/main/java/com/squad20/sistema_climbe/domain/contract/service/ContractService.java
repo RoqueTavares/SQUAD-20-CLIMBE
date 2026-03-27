@@ -1,6 +1,8 @@
 package com.squad20.sistema_climbe.domain.contract.service;
 
+import com.squad20.sistema_climbe.domain.contract.dto.ContractCreateRequest;
 import com.squad20.sistema_climbe.domain.contract.dto.ContractDTO;
+import com.squad20.sistema_climbe.domain.contract.dto.ContractPatchRequest;
 import com.squad20.sistema_climbe.domain.contract.entity.Contract;
 import com.squad20.sistema_climbe.domain.contract.mapper.ContractMapper;
 import com.squad20.sistema_climbe.domain.contract.repository.ContractRepository;
@@ -42,27 +44,28 @@ public class ContractService {
     }
 
     @Transactional
-    public ContractDTO save(ContractDTO dto) {
-        Proposal proposal = proposalRepository.findById(dto.getProposalId())
-                .orElseThrow(() -> new ResourceNotFoundException("Proposta não encontrada com id: " + dto.getProposalId()));
+    public ContractDTO save(ContractCreateRequest request) {
+        Proposal proposal = proposalRepository.findById(request.getProposalId())
+                .orElseThrow(() -> new ResourceNotFoundException("Proposta não encontrada com id: " + request.getProposalId()));
 
-        Contract contract = contractMapper.toEntity(dto);
+        Contract contract = contractMapper.toEntity(request);
+        contract.setId(null);
         contract.setProposal(proposal);
         contract = contractRepository.save(contract);
         return contractMapper.toDTO(contract);
     }
 
     @Transactional
-    public ContractDTO update(Long id, ContractDTO dto) {
+    public ContractDTO update(Long id, ContractPatchRequest patch) {
         Contract existing = findContractOrThrow(id);
 
-        if (dto.getStartDate() != null) existing.setStartDate(dto.getStartDate());
-        if (dto.getEndDate() != null) existing.setEndDate(dto.getEndDate());
-        if (dto.getStatus() != null) existing.setStatus(dto.getStatus());
+        if (patch.getStartDate() != null) existing.setStartDate(patch.getStartDate());
+        if (patch.getEndDate() != null) existing.setEndDate(patch.getEndDate());
+        if (patch.getStatus() != null) existing.setStatus(patch.getStatus());
 
-        if (dto.getProposalId() != null) {
-            Proposal proposal = proposalRepository.findById(dto.getProposalId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Proposta não encontrada com id: " + dto.getProposalId()));
+        if (patch.getProposalId() != null) {
+            Proposal proposal = proposalRepository.findById(patch.getProposalId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Proposta não encontrada com id: " + patch.getProposalId()));
             existing.setProposal(proposal);
         }
 

@@ -1,6 +1,8 @@
 package com.squad20.sistema_climbe.domain.meeting.controller;
 
+import com.squad20.sistema_climbe.domain.meeting.dto.MeetingCreateRequest;
 import com.squad20.sistema_climbe.domain.meeting.dto.MeetingDTO;
+import com.squad20.sistema_climbe.domain.meeting.dto.MeetingPatchRequest;
 import com.squad20.sistema_climbe.domain.meeting.service.MeetingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -45,16 +47,16 @@ public class MeetingController {
 
     @Operation(summary = "Criar reunião", description = "Cadastra uma nova reunião")
     @PostMapping
-    public ResponseEntity<MeetingDTO> save(@Valid @RequestBody MeetingDTO dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(meetingService.save(dto));
+    public ResponseEntity<MeetingDTO> save(@Valid @RequestBody MeetingCreateRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(meetingService.save(request));
     }
 
     @Operation(summary = "Atualizar reunião", description = "Atualiza uma reunião existente (parcial)")
     @PatchMapping("/{id}")
     public ResponseEntity<MeetingDTO> update(
             @Parameter(description = "ID da reunião") @PathVariable Long id,
-            @RequestBody MeetingDTO dto) {
-        return ResponseEntity.ok(meetingService.update(id, dto));
+            @Valid @RequestBody MeetingPatchRequest patch) {
+        return ResponseEntity.ok(meetingService.update(id, patch));
     }
 
     @Operation(summary = "Excluir reunião", description = "Remove uma reunião pelo ID")

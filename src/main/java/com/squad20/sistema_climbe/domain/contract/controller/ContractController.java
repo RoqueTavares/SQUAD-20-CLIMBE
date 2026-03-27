@@ -1,6 +1,8 @@
 package com.squad20.sistema_climbe.domain.contract.controller;
 
+import com.squad20.sistema_climbe.domain.contract.dto.ContractCreateRequest;
 import com.squad20.sistema_climbe.domain.contract.dto.ContractDTO;
+import com.squad20.sistema_climbe.domain.contract.dto.ContractPatchRequest;
 import com.squad20.sistema_climbe.domain.contract.service.ContractService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -45,16 +47,16 @@ public class ContractController {
 
     @Operation(summary = "Criar contrato", description = "Cadastra um novo contrato")
     @PostMapping
-    public ResponseEntity<ContractDTO> save(@Valid @RequestBody ContractDTO dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(contractService.save(dto));
+    public ResponseEntity<ContractDTO> save(@Valid @RequestBody ContractCreateRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(contractService.save(request));
     }
 
     @Operation(summary = "Atualizar contrato", description = "Atualiza um contrato existente (parcial)")
     @PatchMapping("/{id}")
     public ResponseEntity<ContractDTO> update(
             @Parameter(description = "ID do contrato") @PathVariable Long id,
-            @RequestBody ContractDTO dto) {
-        return ResponseEntity.ok(contractService.update(id, dto));
+            @Valid @RequestBody ContractPatchRequest patch) {
+        return ResponseEntity.ok(contractService.update(id, patch));
     }
 
     @Operation(summary = "Excluir contrato", description = "Remove um contrato pelo ID")

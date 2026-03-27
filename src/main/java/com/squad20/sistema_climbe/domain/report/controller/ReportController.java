@@ -1,6 +1,8 @@
 package com.squad20.sistema_climbe.domain.report.controller;
 
+import com.squad20.sistema_climbe.domain.report.dto.ReportCreateRequest;
 import com.squad20.sistema_climbe.domain.report.dto.ReportDTO;
+import com.squad20.sistema_climbe.domain.report.dto.ReportPatchRequest;
 import com.squad20.sistema_climbe.domain.report.service.ReportService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -45,16 +47,16 @@ public class ReportController {
 
     @Operation(summary = "Criar relatório", description = "Cadastra um novo relatório")
     @PostMapping
-    public ResponseEntity<ReportDTO> save(@Valid @RequestBody ReportDTO dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(reportService.save(dto));
+    public ResponseEntity<ReportDTO> save(@Valid @RequestBody ReportCreateRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(reportService.save(request));
     }
 
     @Operation(summary = "Atualizar relatório", description = "Atualiza um relatório existente (parcial)")
     @PatchMapping("/{id}")
     public ResponseEntity<ReportDTO> update(
             @Parameter(description = "ID do relatório") @PathVariable Long id,
-            @RequestBody ReportDTO dto) {
-        return ResponseEntity.ok(reportService.update(id, dto));
+            @Valid @RequestBody ReportPatchRequest patch) {
+        return ResponseEntity.ok(reportService.update(id, patch));
     }
 
     @Operation(summary = "Excluir relatório", description = "Remove um relatório pelo ID")

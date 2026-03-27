@@ -1,6 +1,7 @@
 package com.squad20.sistema_climbe.domain.meeting.mapper;
 
 import com.squad20.sistema_climbe.domain.enterprise.entity.Enterprise;
+import com.squad20.sistema_climbe.domain.meeting.dto.MeetingCreateRequest;
 import com.squad20.sistema_climbe.domain.meeting.dto.MeetingDTO;
 import com.squad20.sistema_climbe.domain.meeting.entity.Meeting;
 import com.squad20.sistema_climbe.domain.user.entity.User;
@@ -20,9 +21,10 @@ public interface MeetingMapper {
     @Mapping(source = "participants", target = "participantIds", qualifiedByName = "participantIds")
     MeetingDTO toDTO(Meeting meeting);
 
+    @Mapping(target = "id", ignore = true)
     @Mapping(target = "enterprise", ignore = true)
     @Mapping(target = "participants", ignore = true)
-    Meeting toEntity(MeetingDTO dto);
+    Meeting toEntity(MeetingCreateRequest request);
 
     @Named("enterpriseDisplayName")
     default String enterpriseDisplayName(Enterprise e) {

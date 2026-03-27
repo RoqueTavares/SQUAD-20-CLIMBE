@@ -1,5 +1,7 @@
 package com.squad20.sistema_climbe.domain.permission.controller;
 
+import com.squad20.sistema_climbe.domain.permission.dto.PermissionCreateRequest;
+import com.squad20.sistema_climbe.domain.permission.dto.PermissionPatchRequest;
 import com.squad20.sistema_climbe.domain.permission.dto.PermissionDTO;
 import com.squad20.sistema_climbe.domain.permission.service.PermissionService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -37,16 +39,16 @@ public class PermissionController {
 
     @Operation(summary = "Criar permissão", description = "Cadastra uma nova permissão")
     @PostMapping
-    public ResponseEntity<PermissionDTO> save(@Valid @RequestBody PermissionDTO dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(permissionService.save(dto));
+    public ResponseEntity<PermissionDTO> save(@Valid @RequestBody PermissionCreateRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(permissionService.save(request));
     }
 
     @Operation(summary = "Atualizar permissão", description = "Atualiza uma permissão existente (parcial)")
     @PatchMapping("/{id}")
     public ResponseEntity<PermissionDTO> update(
             @Parameter(description = "ID da permissão") @PathVariable Long id,
-            @RequestBody PermissionDTO dto) {
-        return ResponseEntity.ok(permissionService.update(id, dto));
+            @Valid @RequestBody PermissionPatchRequest patch) {
+        return ResponseEntity.ok(permissionService.update(id, patch));
     }
 
     @Operation(summary = "Excluir permissão", description = "Remove uma permissão pelo ID")

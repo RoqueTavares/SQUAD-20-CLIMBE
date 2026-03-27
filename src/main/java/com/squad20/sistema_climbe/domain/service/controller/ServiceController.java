@@ -1,5 +1,7 @@
 package com.squad20.sistema_climbe.domain.service.controller;
 
+import com.squad20.sistema_climbe.domain.service.dto.ServiceCreateRequest;
+import com.squad20.sistema_climbe.domain.service.dto.ServicePatchRequest;
 import com.squad20.sistema_climbe.domain.service.dto.ServiceDTO;
 import com.squad20.sistema_climbe.domain.service.service.ServiceService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -37,16 +39,16 @@ public class ServiceController {
 
     @Operation(summary = "Criar serviço", description = "Cadastra um novo serviço")
     @PostMapping
-    public ResponseEntity<ServiceDTO> save(@Valid @RequestBody ServiceDTO dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(serviceService.save(dto));
+    public ResponseEntity<ServiceDTO> save(@Valid @RequestBody ServiceCreateRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(serviceService.save(request));
     }
 
     @Operation(summary = "Atualizar serviço", description = "Atualiza um serviço existente (parcial)")
     @PatchMapping("/{id}")
     public ResponseEntity<ServiceDTO> update(
             @Parameter(description = "ID do serviço") @PathVariable Long id,
-            @RequestBody ServiceDTO dto) {
-        return ResponseEntity.ok(serviceService.update(id, dto));
+            @Valid @RequestBody ServicePatchRequest patch) {
+        return ResponseEntity.ok(serviceService.update(id, patch));
     }
 
     @Operation(summary = "Excluir serviço", description = "Remove um serviço pelo ID")

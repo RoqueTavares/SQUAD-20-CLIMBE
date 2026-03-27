@@ -2,8 +2,10 @@ package com.squad20.sistema_climbe.domain.enterprise.service;
 
 import com.squad20.sistema_climbe.domain.enterprise.entity.Address;
 import com.squad20.sistema_climbe.domain.enterprise.entity.Enterprise;
-import com.squad20.sistema_climbe.domain.enterprise.dto.AddressDTO;
+import com.squad20.sistema_climbe.domain.enterprise.dto.AddressPatchRequest;
+import com.squad20.sistema_climbe.domain.enterprise.dto.EnterpriseCreateRequest;
 import com.squad20.sistema_climbe.domain.enterprise.dto.EnterpriseDTO;
+import com.squad20.sistema_climbe.domain.enterprise.dto.EnterprisePatchRequest;
 import com.squad20.sistema_climbe.domain.enterprise.mapper.EnterpriseMapper;
 import com.squad20.sistema_climbe.domain.enterprise.repository.EnterpriseRepository;
 import com.squad20.sistema_climbe.exception.ConflictException;
@@ -47,45 +49,46 @@ public class EnterpriseService {
     }
 
     @Transactional
-    public EnterpriseDTO save(EnterpriseDTO dto) {
-        if (enterpriseRepository.findByCnpj(dto.getCnpj()).isPresent()) {
+    public EnterpriseDTO save(EnterpriseCreateRequest request) {
+        if (enterpriseRepository.findByCnpj(request.getCnpj()).isPresent()) {
             throw new ConflictException("Já existe empresa cadastrada com este CNPJ");
         }
-        if (dto.getEmail() != null && !dto.getEmail().isBlank()
-                && enterpriseRepository.findByEmail(dto.getEmail()).isPresent()) {
+        if (request.getEmail() != null && !request.getEmail().isBlank()
+                && enterpriseRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new ConflictException("Já existe empresa cadastrada com este e-mail");
         }
 
-        Enterprise enterprise = enterpriseMapper.toEntity(dto);
+        Enterprise enterprise = enterpriseMapper.toEntity(request);
+        enterprise.setId(null);
         enterprise = enterpriseRepository.save(enterprise);
         return enterpriseMapper.toDTO(enterprise);
     }
 
     @Transactional
-    public EnterpriseDTO update(Long id, EnterpriseDTO dto) {
+    public EnterpriseDTO update(Long id, EnterprisePatchRequest patch) {
         Enterprise existing = findEnterpriseOrThrow(id);
 
-        if (dto.getCnpj() != null && !dto.getCnpj().equals(existing.getCnpj())
-                && enterpriseRepository.findByCnpj(dto.getCnpj())
+        if (patch.getCnpj() != null && !patch.getCnpj().equals(existing.getCnpj())
+                && enterpriseRepository.findByCnpj(patch.getCnpj())
                 .filter(e -> !e.getId().equals(id)).isPresent()) {
             throw new ConflictException("Já existe empresa cadastrada com este CNPJ");
         }
 
-        if (dto.getEmail() != null && !dto.getEmail().isBlank() && !dto.getEmail().equals(existing.getEmail())
-                && enterpriseRepository.findByEmail(dto.getEmail())
+        if (patch.getEmail() != null && !patch.getEmail().isBlank() && !patch.getEmail().equals(existing.getEmail())
+                && enterpriseRepository.findByEmail(patch.getEmail())
                 .filter(e -> !e.getId().equals(id)).isPresent()) {
             throw new ConflictException("Já existe empresa cadastrada com este e-mail");
         }
 
-        if (dto.getLegalName() != null) existing.setLegalName(dto.getLegalName());
-        if (dto.getTradeName() != null) existing.setTradeName(dto.getTradeName());
-        if (dto.getCnpj() != null) existing.setCnpj(dto.getCnpj());
-        if (dto.getEmail() != null) existing.setEmail(dto.getEmail());
-        if (dto.getAddress() != null) updateAddress(existing, dto.getAddress());
-        if (dto.getPhone() != null) existing.setPhone(dto.getPhone());
-        if (dto.getRepresentativeName() != null) existing.setRepresentativeName(dto.getRepresentativeName());
-        if (dto.getRepresentativeCpf() != null) existing.setRepresentativeCpf(dto.getRepresentativeCpf());
-        if (dto.getRepresentativePhone() != null) existing.setRepresentativePhone(dto.getRepresentativePhone());
+        if (patch.getLegalName() != null) existing.setLegalName(patch.getLegalName());
+        if (patch.getTradeName() != null) existing.setTradeName(patch.getTradeName());
+        if (patch.getCnpj() != null) existing.setCnpj(patch.getCnpj());
+        if (patch.getEmail() != null) existing.setEmail(patch.getEmail());
+        if (patch.getAddress() != null) updateAddress(existing, patch.getAddress());
+        if (patch.getPhone() != null) existing.setPhone(patch.getPhone());
+        if (patch.getRepresentativeName() != null) existing.setRepresentativeName(patch.getRepresentativeName());
+        if (patch.getRepresentativeCpf() != null) existing.setRepresentativeCpf(patch.getRepresentativeCpf());
+        if (patch.getRepresentativePhone() != null) existing.setRepresentativePhone(patch.getRepresentativePhone());
 
         existing = enterpriseRepository.save(existing);
         return enterpriseMapper.toDTO(existing);
@@ -102,15 +105,15 @@ public class EnterpriseService {
                 .orElseThrow(() -> new ResourceNotFoundException("Empresa não encontrada"));
     }
 
-    private void updateAddress(Enterprise existing, AddressDTO dto) {
+    private void updateAddress(Enterprise existing, AddressPatchRequest patch) {
         Address address = existing.getAddress() != null ? existing.getAddress() : new Address();
 
-        if (dto.getStreet() != null) address.setStreet(dto.getStreet());
-        if (dto.getNumber() != null) address.setNumber(dto.getNumber());
-        if (dto.getNeighborhood() != null) address.setNeighborhood(dto.getNeighborhood());
-        if (dto.getCity() != null) address.setCity(dto.getCity());
-        if (dto.getState() != null) address.setState(dto.getState());
-        if (dto.getZipCode() != null) address.setZipCode(dto.getZipCode());
+        if (patch.getStreet() != null) address.setStreet(patch.getStreet());
+        if (patch.getNumber() != null) address.setNumber(patch.getNumber());
+        if (patch.getNeighborhood() != null) address.setNeighborhood(patch.getNeighborhood());
+        if (patch.getCity() != null) address.setCity(patch.getCity());
+        if (patch.getState() != null) address.setState(patch.getState());
+        if (patch.getZipCode() != null) address.setZipCode(patch.getZipCode());
 
         existing.setAddress(address);
     }

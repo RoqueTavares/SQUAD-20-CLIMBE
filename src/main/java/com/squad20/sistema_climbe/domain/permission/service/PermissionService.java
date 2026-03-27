@@ -1,5 +1,7 @@
 package com.squad20.sistema_climbe.domain.permission.service;
 
+import com.squad20.sistema_climbe.domain.permission.dto.PermissionCreateRequest;
+import com.squad20.sistema_climbe.domain.permission.dto.PermissionPatchRequest;
 import com.squad20.sistema_climbe.domain.permission.entity.Permission;
 import com.squad20.sistema_climbe.domain.permission.dto.PermissionDTO;
 import com.squad20.sistema_climbe.domain.permission.mapper.PermissionMapper;
@@ -30,16 +32,17 @@ public class PermissionService {
     }
 
     @Transactional
-    public PermissionDTO save(PermissionDTO dto) {
-        Permission permission = permissionMapper.toEntity(dto);
+    public PermissionDTO save(PermissionCreateRequest request) {
+        Permission permission = permissionMapper.toEntity(request);
+        permission.setId(null);
         permission = permissionRepository.save(permission);
         return permissionMapper.toDTO(permission);
     }
 
     @Transactional
-    public PermissionDTO update(Long id, PermissionDTO dto) {
+    public PermissionDTO update(Long id, PermissionPatchRequest patch) {
         Permission permission = findPermissionOrThrow(id);
-        if (dto.getDescription() != null) permission.setDescription(dto.getDescription());
+        if (patch.getDescription() != null) permission.setDescription(patch.getDescription());
         permission = permissionRepository.save(permission);
         return permissionMapper.toDTO(permission);
     }

@@ -1,6 +1,8 @@
 package com.squad20.sistema_climbe.domain.document.service;
 
+import com.squad20.sistema_climbe.domain.document.dto.DocumentCreateRequest;
 import com.squad20.sistema_climbe.domain.document.dto.DocumentDTO;
+import com.squad20.sistema_climbe.domain.document.dto.DocumentPatchRequest;
 import com.squad20.sistema_climbe.domain.document.entity.Document;
 import com.squad20.sistema_climbe.domain.document.mapper.DocumentMapper;
 import com.squad20.sistema_climbe.domain.document.repository.DocumentRepository;
@@ -52,15 +54,16 @@ public class DocumentService {
     }
 
     @Transactional
-    public DocumentDTO save(DocumentDTO dto) {
-        Enterprise enterprise = enterpriseRepository.findById(dto.getEnterpriseId())
-                .orElseThrow(() -> new ResourceNotFoundException("Empresa não encontrada com id: " + dto.getEnterpriseId()));
-        User analyst = dto.getAnalystId() != null
-                ? userRepository.findById(dto.getAnalystId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Analista não encontrado com id: " + dto.getAnalystId()))
+    public DocumentDTO save(DocumentCreateRequest request) {
+        Enterprise enterprise = enterpriseRepository.findById(request.getEnterpriseId())
+                .orElseThrow(() -> new ResourceNotFoundException("Empresa não encontrada com id: " + request.getEnterpriseId()));
+        User analyst = request.getAnalystId() != null
+                ? userRepository.findById(request.getAnalystId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Analista não encontrado com id: " + request.getAnalystId()))
                 : null;
 
-        Document document = documentMapper.toEntity(dto);
+        Document document = documentMapper.toEntity(request);
+        document.setId(null);
         document.setEnterprise(enterprise);
         document.setAnalyst(analyst);
         document = documentRepository.save(document);
@@ -68,22 +71,22 @@ public class DocumentService {
     }
 
     @Transactional
-    public DocumentDTO update(Long id, DocumentDTO dto) {
+    public DocumentDTO update(Long id, DocumentPatchRequest patch) {
         Document existing = findDocumentOrThrow(id);
 
-        if (dto.getDocumentType() != null) existing.setDocumentType(dto.getDocumentType());
-        if (dto.getUrl() != null) existing.setUrl(dto.getUrl());
-        if (dto.getValidated() != null) existing.setValidated(dto.getValidated());
+        if (patch.getDocumentType() != null) existing.setDocumentType(patch.getDocumentType());
+        if (patch.getUrl() != null) existing.setUrl(patch.getUrl());
+        if (patch.getValidated() != null) existing.setValidated(patch.getValidated());
 
-        if (dto.getEnterpriseId() != null) {
-            Enterprise enterprise = enterpriseRepository.findById(dto.getEnterpriseId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Empresa não encontrada com id: " + dto.getEnterpriseId()));
+        if (patch.getEnterpriseId() != null) {
+            Enterprise enterprise = enterpriseRepository.findById(patch.getEnterpriseId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Empresa não encontrada com id: " + patch.getEnterpriseId()));
             existing.setEnterprise(enterprise);
         }
 
-        if (dto.getAnalystId() != null) {
-            User analyst = userRepository.findById(dto.getAnalystId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Analista não encontrado com id: " + dto.getAnalystId()));
+        if (patch.getAnalystId() != null) {
+            User analyst = userRepository.findById(patch.getAnalystId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Analista não encontrado com id: " + patch.getAnalystId()));
             existing.setAnalyst(analyst);
         } else if (existing.getAnalyst() != null) {
             existing.setAnalyst(null);

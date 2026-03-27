@@ -1,6 +1,8 @@
 package com.squad20.sistema_climbe.domain.enterprise.controller;
 
+import com.squad20.sistema_climbe.domain.enterprise.dto.EnterpriseCreateRequest;
 import com.squad20.sistema_climbe.domain.enterprise.dto.EnterpriseDTO;
+import com.squad20.sistema_climbe.domain.enterprise.dto.EnterprisePatchRequest;
 import com.squad20.sistema_climbe.domain.enterprise.service.EnterpriseService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -51,16 +53,16 @@ public class EnterpriseController {
 
     @Operation(summary = "Criar empresa", description = "Cadastra uma nova empresa")
     @PostMapping
-    public ResponseEntity<EnterpriseDTO> save(@Valid @RequestBody EnterpriseDTO dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(enterpriseService.save(dto));
+    public ResponseEntity<EnterpriseDTO> save(@Valid @RequestBody EnterpriseCreateRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(enterpriseService.save(request));
     }
 
     @Operation(summary = "Atualizar empresa", description = "Atualiza uma empresa existente (parcial)")
     @PatchMapping("/{id}")
     public ResponseEntity<EnterpriseDTO> update(
             @Parameter(description = "ID da empresa") @PathVariable Long id,
-            @RequestBody EnterpriseDTO dto) {
-        return ResponseEntity.ok(enterpriseService.update(id, dto));
+            @Valid @RequestBody EnterprisePatchRequest patch) {
+        return ResponseEntity.ok(enterpriseService.update(id, patch));
     }
 
     @Operation(summary = "Excluir empresa", description = "Remove uma empresa pelo ID")

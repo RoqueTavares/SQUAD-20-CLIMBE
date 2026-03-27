@@ -1,6 +1,8 @@
 package com.squad20.sistema_climbe.domain.document.controller;
 
+import com.squad20.sistema_climbe.domain.document.dto.DocumentCreateRequest;
 import com.squad20.sistema_climbe.domain.document.dto.DocumentDTO;
+import com.squad20.sistema_climbe.domain.document.dto.DocumentPatchRequest;
 import com.squad20.sistema_climbe.domain.document.service.DocumentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -52,16 +54,16 @@ public class DocumentController {
 
     @Operation(summary = "Criar documento", description = "Cadastra um novo documento")
     @PostMapping
-    public ResponseEntity<DocumentDTO> save(@Valid @RequestBody DocumentDTO dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(documentService.save(dto));
+    public ResponseEntity<DocumentDTO> save(@Valid @RequestBody DocumentCreateRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(documentService.save(request));
     }
 
     @Operation(summary = "Atualizar documento", description = "Atualiza um documento existente (parcial)")
     @PatchMapping("/{id}")
     public ResponseEntity<DocumentDTO> update(
             @Parameter(description = "ID do documento") @PathVariable Long id,
-            @RequestBody DocumentDTO dto) {
-        return ResponseEntity.ok(documentService.update(id, dto));
+            @Valid @RequestBody DocumentPatchRequest patch) {
+        return ResponseEntity.ok(documentService.update(id, patch));
     }
 
     @Operation(summary = "Excluir documento", description = "Remove um documento pelo ID")

@@ -1,6 +1,8 @@
 package com.squad20.sistema_climbe.domain.spreadsheet.controller;
 
+import com.squad20.sistema_climbe.domain.spreadsheet.dto.SpreadsheetCreateRequest;
 import com.squad20.sistema_climbe.domain.spreadsheet.dto.SpreadsheetDTO;
+import com.squad20.sistema_climbe.domain.spreadsheet.dto.SpreadsheetPatchRequest;
 import com.squad20.sistema_climbe.domain.spreadsheet.service.SpreadsheetService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -45,16 +47,16 @@ public class SpreadsheetController {
 
     @Operation(summary = "Criar planilha", description = "Cadastra uma nova planilha")
     @PostMapping
-    public ResponseEntity<SpreadsheetDTO> save(@Valid @RequestBody SpreadsheetDTO dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(spreadsheetService.save(dto));
+    public ResponseEntity<SpreadsheetDTO> save(@Valid @RequestBody SpreadsheetCreateRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(spreadsheetService.save(request));
     }
 
     @Operation(summary = "Atualizar planilha", description = "Atualiza uma planilha existente (parcial)")
     @PatchMapping("/{id}")
     public ResponseEntity<SpreadsheetDTO> update(
             @Parameter(description = "ID da planilha") @PathVariable Long id,
-            @RequestBody SpreadsheetDTO dto) {
-        return ResponseEntity.ok(spreadsheetService.update(id, dto));
+            @Valid @RequestBody SpreadsheetPatchRequest patch) {
+        return ResponseEntity.ok(spreadsheetService.update(id, patch));
     }
 
     @Operation(summary = "Excluir planilha", description = "Remove uma planilha pelo ID")

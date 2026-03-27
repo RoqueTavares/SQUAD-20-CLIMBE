@@ -1,6 +1,5 @@
 package com.squad20.sistema_climbe.domain.document.dto;
 
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
@@ -13,7 +12,6 @@ public class DocumentDTO {
 
     private Long id;
 
-    @NotNull(message = "ID da empresa é obrigatório")
     private Long enterpriseId;
 
     private String enterpriseName;

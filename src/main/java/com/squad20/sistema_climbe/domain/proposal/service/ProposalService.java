@@ -2,7 +2,9 @@ package com.squad20.sistema_climbe.domain.proposal.service;
 
 import com.squad20.sistema_climbe.domain.enterprise.entity.Enterprise;
 import com.squad20.sistema_climbe.domain.enterprise.repository.EnterpriseRepository;
+import com.squad20.sistema_climbe.domain.proposal.dto.ProposalCreateRequest;
 import com.squad20.sistema_climbe.domain.proposal.dto.ProposalDTO;
+import com.squad20.sistema_climbe.domain.proposal.dto.ProposalPatchRequest;
 import com.squad20.sistema_climbe.domain.proposal.entity.Proposal;
 import com.squad20.sistema_climbe.domain.proposal.mapper.ProposalMapper;
 import com.squad20.sistema_climbe.domain.proposal.repository.ProposalRepository;
@@ -53,13 +55,14 @@ public class ProposalService {
     }
 
     @Transactional
-    public ProposalDTO save(ProposalDTO dto) {
-        Enterprise enterprise = enterpriseRepository.findById(dto.getEnterpriseId())
-                .orElseThrow(() -> new ResourceNotFoundException("Empresa não encontrada com id: " + dto.getEnterpriseId()));
-        User user = userRepository.findById(dto.getUserId())
-                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado com id: " + dto.getUserId()));
+    public ProposalDTO save(ProposalCreateRequest request) {
+        Enterprise enterprise = enterpriseRepository.findById(request.getEnterpriseId())
+                .orElseThrow(() -> new ResourceNotFoundException("Empresa não encontrada com id: " + request.getEnterpriseId()));
+        User user = userRepository.findById(request.getUserId())
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado com id: " + request.getUserId()));
 
-        Proposal proposal = proposalMapper.toEntity(dto);
+        Proposal proposal = proposalMapper.toEntity(request);
+        proposal.setId(null);
         proposal.setEnterprise(enterprise);
         proposal.setUser(user);
         if (proposal.getCreatedAt() == null) {
@@ -71,20 +74,20 @@ public class ProposalService {
     }
 
     @Transactional
-    public ProposalDTO update(Long id, ProposalDTO dto) {
+    public ProposalDTO update(Long id, ProposalPatchRequest patch) {
         Proposal existing = findProposalOrThrow(id);
 
-        if (dto.getStatus() != null) existing.setStatus(dto.getStatus());
+        if (patch.getStatus() != null) existing.setStatus(patch.getStatus());
 
-        if (dto.getEnterpriseId() != null) {
-            Enterprise enterprise = enterpriseRepository.findById(dto.getEnterpriseId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Empresa não encontrada com id: " + dto.getEnterpriseId()));
+        if (patch.getEnterpriseId() != null) {
+            Enterprise enterprise = enterpriseRepository.findById(patch.getEnterpriseId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Empresa não encontrada com id: " + patch.getEnterpriseId()));
             existing.setEnterprise(enterprise);
         }
 
-        if (dto.getUserId() != null) {
-            User user = userRepository.findById(dto.getUserId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado com id: " + dto.getUserId()));
+        if (patch.getUserId() != null) {
+            User user = userRepository.findById(patch.getUserId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado com id: " + patch.getUserId()));
             existing.setUser(user);
         }
 

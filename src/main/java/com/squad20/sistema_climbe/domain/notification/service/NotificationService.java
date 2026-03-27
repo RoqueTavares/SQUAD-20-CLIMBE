@@ -1,6 +1,8 @@
 package com.squad20.sistema_climbe.domain.notification.service;
 
+import com.squad20.sistema_climbe.domain.notification.dto.NotificationCreateRequest;
 import com.squad20.sistema_climbe.domain.notification.dto.NotificationDTO;
+import com.squad20.sistema_climbe.domain.notification.dto.NotificationPatchRequest;
 import com.squad20.sistema_climbe.domain.notification.entity.Notification;
 import com.squad20.sistema_climbe.domain.notification.mapper.NotificationMapper;
 import com.squad20.sistema_climbe.domain.notification.repository.NotificationRepository;
@@ -43,11 +45,12 @@ public class NotificationService {
     }
 
     @Transactional
-    public NotificationDTO save(NotificationDTO dto) {
-        User user = userRepository.findById(dto.getUserId())
-                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado com id: " + dto.getUserId()));
+    public NotificationDTO save(NotificationCreateRequest request) {
+        User user = userRepository.findById(request.getUserId())
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado com id: " + request.getUserId()));
 
-        Notification notification = notificationMapper.toEntity(dto);
+        Notification notification = notificationMapper.toEntity(request);
+        notification.setId(null);
         notification.setUser(user);
 
         if (notification.getSentAt() == null) {
@@ -59,16 +62,16 @@ public class NotificationService {
     }
 
     @Transactional
-    public NotificationDTO update(Long id, NotificationDTO dto) {
+    public NotificationDTO update(Long id, NotificationPatchRequest patch) {
         Notification existing = findNotificationOrThrow(id);
 
-        if (dto.getMessage() != null) existing.setMessage(dto.getMessage());
-        if (dto.getSentAt() != null) existing.setSentAt(dto.getSentAt());
-        if (dto.getType() != null) existing.setType(dto.getType());
+        if (patch.getMessage() != null) existing.setMessage(patch.getMessage());
+        if (patch.getSentAt() != null) existing.setSentAt(patch.getSentAt());
+        if (patch.getType() != null) existing.setType(patch.getType());
 
-        if (dto.getUserId() != null) {
-            User user = userRepository.findById(dto.getUserId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado com id: " + dto.getUserId()));
+        if (patch.getUserId() != null) {
+            User user = userRepository.findById(patch.getUserId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado com id: " + patch.getUserId()));
             existing.setUser(user);
         }
 

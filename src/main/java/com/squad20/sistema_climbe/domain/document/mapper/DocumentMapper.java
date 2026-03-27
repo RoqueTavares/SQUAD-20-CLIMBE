@@ -1,5 +1,6 @@
 package com.squad20.sistema_climbe.domain.document.mapper;
 
+import com.squad20.sistema_climbe.domain.document.dto.DocumentCreateRequest;
 import com.squad20.sistema_climbe.domain.document.dto.DocumentDTO;
 import com.squad20.sistema_climbe.domain.document.entity.Document;
 import com.squad20.sistema_climbe.domain.enterprise.entity.Enterprise;
@@ -17,9 +18,10 @@ public interface DocumentMapper {
     @Mapping(source = "analyst.fullName", target = "analystName")
     DocumentDTO toDTO(Document document);
 
+    @Mapping(target = "id", ignore = true)
     @Mapping(target = "enterprise", ignore = true)
     @Mapping(target = "analyst", ignore = true)
-    Document toEntity(DocumentDTO dto);
+    Document toEntity(DocumentCreateRequest request);
 
     @Named("enterpriseDisplayName")
     default String enterpriseDisplayName(Enterprise e) {

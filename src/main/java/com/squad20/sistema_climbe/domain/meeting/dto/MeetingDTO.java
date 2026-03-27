@@ -1,7 +1,5 @@
 package com.squad20.sistema_climbe.domain.meeting.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
@@ -18,12 +16,10 @@ public class MeetingDTO {
 
     private Long id;
 
-    @NotNull(message = "ID da empresa é obrigatório")
     private Long enterpriseId;
 
     private String enterpriseName;
 
-    @NotBlank(message = "Título da reunião é obrigatório")
     @Size(max = 255)
     private String title;
 

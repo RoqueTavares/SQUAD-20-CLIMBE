@@ -1,6 +1,8 @@
 package com.squad20.sistema_climbe.domain.notification.controller;
 
+import com.squad20.sistema_climbe.domain.notification.dto.NotificationCreateRequest;
 import com.squad20.sistema_climbe.domain.notification.dto.NotificationDTO;
+import com.squad20.sistema_climbe.domain.notification.dto.NotificationPatchRequest;
 import com.squad20.sistema_climbe.domain.notification.service.NotificationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -45,16 +47,16 @@ public class NotificationController {
 
     @Operation(summary = "Criar notificação", description = "Cadastra uma nova notificação")
     @PostMapping
-    public ResponseEntity<NotificationDTO> save(@Valid @RequestBody NotificationDTO dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(notificationService.save(dto));
+    public ResponseEntity<NotificationDTO> save(@Valid @RequestBody NotificationCreateRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(notificationService.save(request));
     }
 
     @Operation(summary = "Atualizar notificação", description = "Atualiza uma notificação existente (parcial)")
     @PatchMapping("/{id}")
     public ResponseEntity<NotificationDTO> update(
             @Parameter(description = "ID da notificação") @PathVariable Long id,
-            @RequestBody NotificationDTO dto) {
-        return ResponseEntity.ok(notificationService.update(id, dto));
+            @Valid @RequestBody NotificationPatchRequest patch) {
+        return ResponseEntity.ok(notificationService.update(id, patch));
     }
 
     @Operation(summary = "Excluir notificação", description = "Remove uma notificação pelo ID")

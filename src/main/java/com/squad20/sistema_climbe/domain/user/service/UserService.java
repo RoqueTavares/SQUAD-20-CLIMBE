@@ -1,5 +1,7 @@
 package com.squad20.sistema_climbe.domain.user.service;
 
+import com.squad20.sistema_climbe.domain.user.dto.UserCreateRequest;
+import com.squad20.sistema_climbe.domain.user.dto.UserPatchRequest;
 import com.squad20.sistema_climbe.domain.user.entity.User;
 import com.squad20.sistema_climbe.domain.user.dto.UserDTO;
 import com.squad20.sistema_climbe.domain.user.mapper.UserMapper;
@@ -45,22 +47,23 @@ public class UserService {
     }
 
     @Transactional
-    public UserDTO save(UserDTO dto) {
-        validateEmailCpfUnique(dto.getEmail(), dto.getCpf(), null);
-        User user = userMapper.toEntity(dto);
+    public UserDTO save(UserCreateRequest request) {
+        validateEmailCpfUnique(request.getEmail(), request.getCpf(), null);
+        User user = userMapper.toEntity(request);
+        user.setId(null);
         user = userRepository.save(user);
         return userMapper.toDTO(user);
     }
 
     @Transactional
-    public UserDTO update(Long id, UserDTO dto) {
+    public UserDTO update(Long id, UserPatchRequest patch) {
         User user = findUserOrThrow(id);
-        validateEmailCpfUnique(dto.getEmail(), dto.getCpf(), id);
-        if (dto.getFullName() != null) user.setFullName(dto.getFullName());
-        if (dto.getCpf() != null) user.setCpf(dto.getCpf());
-        if (dto.getEmail() != null) user.setEmail(dto.getEmail());
-        if (dto.getPhone() != null) user.setPhone(dto.getPhone());
-        if (dto.getStatus() != null) user.setStatus(dto.getStatus());
+        validateEmailCpfUnique(patch.getEmail(), patch.getCpf(), id);
+        if (patch.getFullName() != null) user.setFullName(patch.getFullName());
+        if (patch.getCpf() != null) user.setCpf(patch.getCpf());
+        if (patch.getEmail() != null) user.setEmail(patch.getEmail());
+        if (patch.getPhone() != null) user.setPhone(patch.getPhone());
+        if (patch.getStatus() != null) user.setStatus(patch.getStatus());
         user = userRepository.save(user);
         return userMapper.toDTO(user);
     }

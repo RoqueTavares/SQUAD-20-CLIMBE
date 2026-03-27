@@ -1,6 +1,7 @@
 package com.squad20.sistema_climbe.domain.proposal.mapper;
 
 import com.squad20.sistema_climbe.domain.enterprise.entity.Enterprise;
+import com.squad20.sistema_climbe.domain.proposal.dto.ProposalCreateRequest;
 import com.squad20.sistema_climbe.domain.proposal.dto.ProposalDTO;
 import com.squad20.sistema_climbe.domain.proposal.entity.Proposal;
 import org.mapstruct.Mapper;
@@ -17,9 +18,10 @@ public interface ProposalMapper {
     @Mapping(source = "user.fullName", target = "userName")
     ProposalDTO toDTO(Proposal proposal);
 
+    @Mapping(target = "id", ignore = true)
     @Mapping(target = "enterprise", ignore = true)
     @Mapping(target = "user", ignore = true)
-    Proposal toEntity(ProposalDTO dto);
+    Proposal toEntity(ProposalCreateRequest request);
 
     @Named("enterpriseDisplayName")
     default String enterpriseDisplayName(Enterprise e) {

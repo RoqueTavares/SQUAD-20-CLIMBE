@@ -1,6 +1,8 @@
 package com.squad20.sistema_climbe.domain.proposal.controller;
 
+import com.squad20.sistema_climbe.domain.proposal.dto.ProposalCreateRequest;
 import com.squad20.sistema_climbe.domain.proposal.dto.ProposalDTO;
+import com.squad20.sistema_climbe.domain.proposal.dto.ProposalPatchRequest;
 import com.squad20.sistema_climbe.domain.proposal.service.ProposalService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -52,16 +54,16 @@ public class ProposalController {
 
     @Operation(summary = "Criar proposta", description = "Cadastra uma nova proposta")
     @PostMapping
-    public ResponseEntity<ProposalDTO> save(@Valid @RequestBody ProposalDTO dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(proposalService.save(dto));
+    public ResponseEntity<ProposalDTO> save(@Valid @RequestBody ProposalCreateRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(proposalService.save(request));
     }
 
     @Operation(summary = "Atualizar proposta", description = "Atualiza uma proposta existente (parcial)")
     @PatchMapping("/{id}")
     public ResponseEntity<ProposalDTO> update(
             @Parameter(description = "ID da proposta") @PathVariable Long id,
-            @RequestBody ProposalDTO dto) {
-        return ResponseEntity.ok(proposalService.update(id, dto));
+            @Valid @RequestBody ProposalPatchRequest patch) {
+        return ResponseEntity.ok(proposalService.update(id, patch));
     }
 
     @Operation(summary = "Excluir proposta", description = "Remove uma proposta pelo ID")
