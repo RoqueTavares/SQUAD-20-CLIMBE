@@ -1,7 +1,7 @@
 package com.squad20.sistema_climbe.controller;
 
 import com.squad20.sistema_climbe.entity.User;
-import com.squad20.sistema_climbe.entityDTO.UserDTO;
+import com.squad20.sistema_climbe.dto.UserDTO;
 import com.squad20.sistema_climbe.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
