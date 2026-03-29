@@ -1,11 +1,15 @@
 package com.squad20.sistema_climbe.domain.notification.entity;
 
+import com.squad20.sistema_climbe.domain.common.entity.BaseEntity;
 import com.squad20.sistema_climbe.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDateTime;
 
+// Filtro automático: Hibernate injeta "AND deleted_at IS NULL" em todas as queries desta entidade.
+@SQLRestriction("deleted_at IS NULL")
 @Entity
 @Table(name = "notificacoes")
 @Getter
@@ -13,7 +17,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Notification {
+public class Notification extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -33,4 +37,3 @@ public class Notification {
     @Column(name = "tipo", length = 50)
     private String type;
 }
-

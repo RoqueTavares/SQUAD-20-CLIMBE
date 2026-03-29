@@ -1,11 +1,15 @@
 package com.squad20.sistema_climbe.domain.enterprise.entity;
 
+import com.squad20.sistema_climbe.domain.common.entity.BaseEntity;
 import com.squad20.sistema_climbe.domain.service.entity.OfferedService;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.util.Set;
 
+// Filtro automático: Hibernate injeta "AND deleted_at IS NULL" em todas as queries desta entidade.
+@SQLRestriction("deleted_at IS NULL")
 @Entity
 @Table(name = "empresas")
 @Getter
@@ -13,7 +17,7 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Enterprise {
+public class Enterprise extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,7 +30,8 @@ public class Enterprise {
     @Column(name = "nome_fantasia")
     private String tradeName;
 
-    @Column(unique = true, nullable = false)
+    // unique=true removido: substituído por partial index no banco (ver soft-delete-indexes.sql)
+    @Column(nullable = false)
     private String cnpj;
 
     @Embedded
@@ -35,7 +40,8 @@ public class Enterprise {
     @Column(name = "telefone")
     private String phone;
 
-    @Column(unique = true, nullable = false)
+    // unique=true removido: substituído por partial index no banco (ver soft-delete-indexes.sql)
+    @Column(nullable = false)
     private String email;
 
     @Column(name = "representante_nome")

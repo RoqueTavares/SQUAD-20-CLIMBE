@@ -52,7 +52,9 @@ public class CargoService {
     @Transactional
     public void delete(Long id) {
         Cargo role = findRoleOrThrow(id);
-        cargoRepository.delete(role);
+        // Soft delete: marca como deletado; o registro permanece no banco.
+        role.setDeletedAt(java.time.LocalDateTime.now());
+        cargoRepository.save(role);
     }
 
     private Cargo findRoleOrThrow(Long id) {

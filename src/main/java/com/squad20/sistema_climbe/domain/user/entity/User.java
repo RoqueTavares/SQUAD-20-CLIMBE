@@ -1,8 +1,10 @@
 package com.squad20.sistema_climbe.domain.user.entity;
 
+import com.squad20.sistema_climbe.domain.common.entity.BaseEntity;
 import com.squad20.sistema_climbe.domain.permission.entity.Permission;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLRestriction;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -10,6 +12,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+// Filtro automático: Hibernate injeta "AND deleted_at IS NULL" em todas as queries desta entidade.
+@SQLRestriction("deleted_at IS NULL")
 @Entity
 @Table(name = "usuarios")
 @Getter
@@ -17,7 +21,7 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class User implements UserDetails {
+public class User extends BaseEntity implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,10 +31,12 @@ public class User implements UserDetails {
     @Column(name = "nome_completo", nullable = false, length = 255)
     private String fullName;
 
-    @Column(unique = true, nullable = false, length = 14)
+    // unique=true removido: substituído por partial index no banco (ver soft-delete-indexes.sql)
+    @Column(nullable = false, length = 14)
     private String cpf;
 
-    @Column(unique = true, nullable = false, length = 255)
+    // unique=true removido: substituído por partial index no banco (ver soft-delete-indexes.sql)
+    @Column(nullable = false, length = 255)
     private String email;
 
     @Column(name = "contato", length = 50)
@@ -80,8 +86,10 @@ public class User implements UserDetails {
         return UserDetails.super.isCredentialsNonExpired();
     }
 
+    // Bloqueia autenticação JWT para usuários soft-deletados.
+    // Spring Security chama isEnabled() antes de validar o token.
     @Override
     public boolean isEnabled() {
-        return UserDetails.super.isEnabled();
+        return !isDeleted();
     }
 }

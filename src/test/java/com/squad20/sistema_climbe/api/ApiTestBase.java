@@ -14,6 +14,8 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -35,6 +37,17 @@ abstract class ApiTestBase {
         "/api/notifications", "/api/meetings", "/api/proposals", "/api/contracts",
         "/api/spreadsheets", "/api/reports", "/api/documents"
     };
+
+    /**
+     * Contador atômico compartilhado entre todos os testes. Evita colisões de CPF/CNPJ causadas
+     * pela periodicidade de System.nanoTime() (dois valores que diferem por múltiplos de 10^9
+     * geram o mesmo CPF base). Sempre use nextSeed() em vez de System.nanoTime() como seed.
+     */
+    private static final AtomicLong SEED = new AtomicLong(100_000_001L);
+
+    protected static long nextSeed() {
+        return SEED.getAndIncrement();
+    }
 
     @Autowired
     protected MockMvc mockMvc;
@@ -111,7 +124,7 @@ abstract class ApiTestBase {
     }
 
     protected String createEnterprise() throws Exception {
-        long n = Math.abs(System.nanoTime());
+        long n = nextSeed();
         String filial = String.format("%04d", n % 10000);
         String dv = String.format("%02d", (n / 10000) % 100);
 
@@ -123,7 +136,7 @@ abstract class ApiTestBase {
     }
 
     protected UserFixture createUser() throws Exception {
-        long n = Math.abs(System.nanoTime());
+        long n = nextSeed();
         String email = "user" + n + "@teste.com";
         String cpf = generateValidCpf(n);
         String body = "{\"fullName\":\"Usuario Teste " + n + "\",\"cpf\":\"" + cpf
@@ -210,4 +223,25 @@ abstract class ApiTestBase {
     protected record ProposalFixture(String id, String enterpriseId, String userId) {}
 
     protected record ContractFixture(String id, String proposalId, String enterpriseId, String userId) {}
+
+    protected String createNotification(String userId) throws Exception {
+        String body = "{\"userId\":" + userId + ",\"message\":\"Notificacao teste " + System.nanoTime() + "\"}";
+        return createResource("/api/notifications", body);
+    }
+
+    protected String createReport(String contractId) throws Exception {
+        String body = "{\"contractId\":" + contractId + ",\"pdfUrl\":\"https://teste.com/report-" + System.nanoTime() + ".pdf\"}";
+        return createResource("/api/reports", body);
+    }
+
+    protected String createSpreadsheet(String contractId) throws Exception {
+        String body = "{\"contractId\":" + contractId + ",\"googleSheetsUrl\":\"https://docs.google.com/spreadsheets/d/" + System.nanoTime() + "\"}";
+        return createResource("/api/spreadsheets", body);
+    }
+
+    protected String createDocument(String enterpriseId) throws Exception {
+        UserFixture analyst = createUser();
+        String body = "{\"enterpriseId\":" + enterpriseId + ",\"analystId\":" + analyst.id() + ",\"title\":\"Documento teste " + System.nanoTime() + "\"}";
+        return createResource("/api/documents", body);
+    }
 }

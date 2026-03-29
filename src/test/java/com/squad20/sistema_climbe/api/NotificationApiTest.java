@@ -3,6 +3,7 @@ package com.squad20.sistema_climbe.api;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -39,5 +40,26 @@ class NotificationApiTest extends ApiTestBase {
         mockMvc.perform(get(getBasePath() + "/user/" + user.id()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].userId").value(Integer.parseInt(user.id())));
+    }
+
+    @Test
+    @DisplayName("Soft delete não aparece em $.content da listagem geral")
+    void softDeleteNaoApareceEmPageContent() throws Exception {
+        UserFixture user = createUser();
+        String notificationId = createNotification(user.id());
+
+        mockMvc.perform(get(getBasePath() + "?size=200"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content[?(@.id == " + notificationId + ")]").isNotEmpty());
+
+        mockMvc.perform(delete(getBasePath() + "/" + notificationId))
+            .andExpect(status().isNoContent());
+
+        mockMvc.perform(get(getBasePath() + "/" + notificationId))
+            .andExpect(status().isNotFound());
+
+        mockMvc.perform(get(getBasePath() + "?size=200"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content[?(@.id == " + notificationId + ")]").isEmpty());
     }
 }

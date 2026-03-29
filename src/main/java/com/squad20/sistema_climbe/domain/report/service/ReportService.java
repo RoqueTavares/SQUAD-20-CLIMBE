@@ -72,7 +72,8 @@ public class ReportService {
     @Transactional
     public void delete(Long id) {
         Report report = findReportOrThrow(id);
-        reportRepository.delete(report);
+        report.setDeletedAt(java.time.LocalDateTime.now());
+        reportRepository.save(report);
     }
 
     private Report findReportOrThrow(Long id) {

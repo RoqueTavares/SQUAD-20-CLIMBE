@@ -96,7 +96,8 @@ public class DocumentService {
     @Transactional
     public void delete(Long id) {
         Document document = findDocumentOrThrow(id);
-        documentRepository.delete(document);
+        document.setDeletedAt(java.time.LocalDateTime.now());
+        documentRepository.save(document);
     }
 
     private Document findDocumentOrThrow(Long id) {
