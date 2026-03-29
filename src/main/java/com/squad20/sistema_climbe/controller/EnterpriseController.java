@@ -19,7 +19,6 @@ public class EnterpriseController {
 
     @GetMapping
     public ResponseEntity<List<EnterpriseDTO>> findAll() {
-
         return ResponseEntity.ok(enterpriseService.findAll());
     }
 

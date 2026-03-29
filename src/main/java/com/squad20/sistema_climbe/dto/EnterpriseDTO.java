@@ -43,5 +43,4 @@ public class EnterpriseDTO {
         this.representante_contato = enterprise.getRepresentante_contato();
     }
 
-
 }

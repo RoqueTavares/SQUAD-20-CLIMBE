@@ -39,7 +39,7 @@ public class UserService {
             userDTO.setEmail(user.get().getEmail());
             userDTO.setCpf(user.get().getCpf());
             userDTO.setCargo(user.get().getCargoId());
-        }else{
+        } else {
             throw new EmptyResultDataAccessException(1);
         }
 
@@ -56,7 +56,7 @@ public class UserService {
             userDTO.setEmail(user.get().getEmail());
             userDTO.setCpf(user.get().getCpf());
             userDTO.setCargo(user.get().getCargoId());
-        }else{
+        } else {
             throw new EmptyResultDataAccessException(1);
         }
 
@@ -75,7 +75,7 @@ public class UserService {
             userDTO.setCpf(user.get().getCpf());
             userDTO.setCargo(user.get().getCargoId());
 
-        }else {
+        } else {
             throw new EmptyResultDataAccessException(1);
         }
 
@@ -91,7 +91,7 @@ public class UserService {
     @Transactional
     public User save(User user) {
 
-        if(userRepository.findByCpf(user.getCpf()).isPresent() ){
+        if(userRepository.findByCpf(user.getCpf()).isPresent()){
             throw new RuntimeException("User cpf already exists");
         }
 
@@ -108,14 +108,11 @@ public class UserService {
         User userManaged = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado com o ID: " + id));
 
-
         userManaged.setNomeCompleto(user.getNomeCompleto());
         userManaged.setEmail(user.getEmail());
         userManaged.setCpf(user.getCpf());
         userManaged.setCargoId(user.getCargoId());
 
-
         return userRepository.save(userManaged);
     }
 }
-

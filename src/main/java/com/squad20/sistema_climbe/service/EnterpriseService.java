@@ -24,7 +24,7 @@ public class EnterpriseService {
                 .map(user -> new EnterpriseDTO(user))
                 .toList();
 
-        return enterprise ;
+        return enterprise;
     }
 
     public EnterpriseDTO findById(int id) {
@@ -32,7 +32,7 @@ public class EnterpriseService {
 
         if (enterprise.isPresent()) {
             return new EnterpriseDTO(enterprise.get());
-        }else{
+        } else {
             throw new RuntimeException("Enterprise not found");
         }
     }
@@ -42,7 +42,7 @@ public class EnterpriseService {
 
         if (enterprise.isPresent()) {
             return new EnterpriseDTO(enterprise.get());
-        }else{
+        } else {
             throw new RuntimeException("Enterprise not found");
         }
     }
@@ -50,9 +50,9 @@ public class EnterpriseService {
     public EnterpriseDTO findByCnpj(String cnpj) {
         Optional<Enterprise> enterprise = enterpriseRepository.findByCnpj(cnpj);
 
-        if(enterprise.isPresent()) {
+        if (enterprise.isPresent()) {
             return new EnterpriseDTO(enterprise.get());
-        }else{
+        } else {
             throw new RuntimeException("Enterprise not found");
         }
     }
@@ -69,14 +69,13 @@ public class EnterpriseService {
         }
 
        return enterpriseRepository.save(enterprise);
-
     }
 
     @Transactional
     public Enterprise update(int id, Enterprise enterprise) {
         Enterprise oldEnterprise = enterpriseRepository.getReferenceById(id);
 
-        if(oldEnterprise != null) {
+        if (oldEnterprise != null) {
             oldEnterprise.setRazao_social(enterprise.getRazao_social());
             oldEnterprise.setCnpj(enterprise.getCnpj());
             oldEnterprise.setEmail(enterprise.getEmail());
@@ -90,7 +89,7 @@ public class EnterpriseService {
             oldEnterprise.setRepresentante_nome(enterprise.getRepresentante_nome());
             oldEnterprise.setRepresentante_cnpj(enterprise.getRepresentante_cnpj());
             oldEnterprise.setRepresentante_contato(enterprise.getRepresentante_contato());
-        }else{
+        } else {
             throw new RuntimeException("Enterprise not found");
         }
 
