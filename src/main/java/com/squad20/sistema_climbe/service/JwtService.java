@@ -34,7 +34,18 @@ public class JwtService {
     }
 
     public String generateToken(UserDetails userDetails) {
-        return generateToken(new HashMap<>(), userDetails);
+        Map<String, Object> extraClaims = new HashMap<>();
+        if (userDetails instanceof com.squad20.sistema_climbe.domain.user.entity.User user) {
+            if (user.getRole() != null) {
+                extraClaims.put("role", user.getRole().name());
+            }
+            if (user.getPermissions() != null && !user.getPermissions().isEmpty()) {
+                extraClaims.put("permissions", user.getPermissions().stream()
+                        .map(com.squad20.sistema_climbe.domain.permission.entity.Permission::getDescription)
+                        .toList());
+            }
+        }
+        return generateToken(extraClaims, userDetails);
     }
 
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {

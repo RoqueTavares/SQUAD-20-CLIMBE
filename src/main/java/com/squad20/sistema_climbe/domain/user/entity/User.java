@@ -9,7 +9,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 
 // Filtro automático: Hibernate injeta "AND deleted_at IS NULL" em todas as queries desta entidade.
@@ -48,6 +47,10 @@ public class User extends BaseEntity implements UserDetails {
     @Column(name = "senha_hash", length = 60)
     private String passwordHash;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "cargo")
+    private Role role;
+
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "usuario_permissoes",
@@ -58,7 +61,14 @@ public class User extends BaseEntity implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of();
+        java.util.List<GrantedAuthority> authorities = new java.util.ArrayList<>();
+        if (role != null) {
+            authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_" + role.name()));
+        }
+        if (permissions != null) {
+            permissions.forEach(p -> authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority(p.getDescription())));
+        }
+        return authorities;
     }
 
     @Override

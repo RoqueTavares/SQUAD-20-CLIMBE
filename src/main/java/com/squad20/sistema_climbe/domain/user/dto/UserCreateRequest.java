@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.validator.constraints.br.CPF;
+import com.squad20.sistema_climbe.domain.user.entity.Role;
 
 @Getter
 @Setter
@@ -36,4 +37,6 @@ public class UserCreateRequest {
 
     @Size(max = 255)
     private String status;
+
+    private Role role;
 }

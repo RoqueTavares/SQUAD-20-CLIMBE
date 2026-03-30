@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
@@ -23,7 +22,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Base para testes por API: GET lista, GET 404, e (se houver payload mínimo) POST, PATCH, DELETE.
+ * Base para testes por API: GET lista, GET 404, e (se houver payload mínimo)
+ * POST, PATCH, DELETE.
  */
 @SpringBootTest(classes = SistemaClimbeApplication.class)
 @AutoConfigureMockMvc
@@ -31,17 +31,23 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WithMockUser
 abstract class ApiTestBase {
 
-    /** Lista única de paths das APIs — usar no smoke e para garantir que nenhum recurso fique de fora. */
+    /**
+     * Lista única de paths das APIs — usar no smoke e para garantir que nenhum
+     * recurso fique de fora.
+     */
     public static final String[] API_BASE_PATHS = {
-        "/api/roles", "/api/users", "/api/enterprises", "/api/permissions", "/api/services",
-        "/api/notifications", "/api/meetings", "/api/proposals", "/api/contracts",
-        "/api/spreadsheets", "/api/reports", "/api/documents"
+            "/api/roles", "/api/users", "/api/enterprises", "/api/permissions", "/api/services",
+            "/api/notifications", "/api/meetings", "/api/proposals", "/api/contracts",
+            "/api/spreadsheets", "/api/reports", "/api/documents"
     };
 
     /**
-     * Contador atômico compartilhado entre todos os testes. Evita colisões de CPF/CNPJ causadas
-     * pela periodicidade de System.nanoTime() (dois valores que diferem por múltiplos de 10^9
-     * geram o mesmo CPF base). Sempre use nextSeed() em vez de System.nanoTime() como seed.
+     * Contador atômico compartilhado entre todos os testes. Evita colisões de
+     * CPF/CNPJ causadas
+     * pela periodicidade de System.nanoTime() (dois valores que diferem por
+     * múltiplos de 10^9
+     * geram o mesmo CPF base). Sempre use nextSeed() em vez de System.nanoTime()
+     * como seed.
      */
     private static final AtomicLong SEED = new AtomicLong(100_000_001L);
 
@@ -55,7 +61,8 @@ abstract class ApiTestBase {
     protected abstract String getBasePath();
 
     /**
-     * Payload mínimo para POST. Se null, só rodam testes de GET lista e GET por id inexistente.
+     * Payload mínimo para POST. Se null, só rodam testes de GET lista e GET por id
+     * inexistente.
      */
     protected String getMinimalPostBody() {
         return null;
@@ -80,7 +87,7 @@ abstract class ApiTestBase {
         mockMvc.perform(post(getBasePath())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(getMinimalPostBody()))
-            .andExpect(status().isCreated());
+                .andExpect(status().isCreated());
     }
 
     @Test
@@ -90,14 +97,14 @@ abstract class ApiTestBase {
         String createRes = mockMvc.perform(post(getBasePath())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(getMinimalPostBody()))
-            .andExpect(status().isCreated())
-            .andReturn().getResponse().getContentAsString();
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
         String id = extractIdFromJson(createRes);
         String patchBody = getPatchBody();
         mockMvc.perform(patch(getBasePath() + "/" + id)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(patchBody))
-            .andExpect(status().isOk());
+                .andExpect(status().isOk());
     }
 
     @Test
@@ -107,8 +114,8 @@ abstract class ApiTestBase {
         String createRes = mockMvc.perform(post(getBasePath())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(getMinimalPostBody()))
-            .andExpect(status().isCreated())
-            .andReturn().getResponse().getContentAsString();
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
         String id = extractIdFromJson(createRes);
         mockMvc.perform(delete(getBasePath() + "/" + id)).andExpect(status().isNoContent());
     }
@@ -118,7 +125,8 @@ abstract class ApiTestBase {
     }
 
     protected static String extractIdFromJson(String json) {
-        if (json == null) return null;
+        if (json == null)
+            return null;
         java.util.regex.Matcher m = java.util.regex.Pattern.compile("\"id\"\\s*:\\s*(\\d+)").matcher(json);
         return m.find() ? m.group(1) : null;
     }
@@ -168,8 +176,8 @@ abstract class ApiTestBase {
 
     protected String createResource(String path, String body) throws Exception {
         MvcResult result = mockMvc.perform(post(path)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(body))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
                 .andExpect(status().isCreated())
                 .andReturn();
 
@@ -218,11 +226,14 @@ abstract class ApiTestBase {
         return cpf.toString();
     }
 
-    protected record UserFixture(String id, String email, String cpf) {}
+    protected record UserFixture(String id, String email, String cpf) {
+    }
 
-    protected record ProposalFixture(String id, String enterpriseId, String userId) {}
+    protected record ProposalFixture(String id, String enterpriseId, String userId) {
+    }
 
-    protected record ContractFixture(String id, String proposalId, String enterpriseId, String userId) {}
+    protected record ContractFixture(String id, String proposalId, String enterpriseId, String userId) {
+    }
 
     protected String createNotification(String userId) throws Exception {
         String body = "{\"userId\":" + userId + ",\"message\":\"Notificacao teste " + System.nanoTime() + "\"}";
@@ -230,18 +241,21 @@ abstract class ApiTestBase {
     }
 
     protected String createReport(String contractId) throws Exception {
-        String body = "{\"contractId\":" + contractId + ",\"pdfUrl\":\"https://teste.com/report-" + System.nanoTime() + ".pdf\"}";
+        String body = "{\"contractId\":" + contractId + ",\"pdfUrl\":\"https://teste.com/report-" + System.nanoTime()
+                + ".pdf\"}";
         return createResource("/api/reports", body);
     }
 
     protected String createSpreadsheet(String contractId) throws Exception {
-        String body = "{\"contractId\":" + contractId + ",\"googleSheetsUrl\":\"https://docs.google.com/spreadsheets/d/" + System.nanoTime() + "\"}";
+        String body = "{\"contractId\":" + contractId + ",\"googleSheetsUrl\":\"https://docs.google.com/spreadsheets/d/"
+                + System.nanoTime() + "\"}";
         return createResource("/api/spreadsheets", body);
     }
 
     protected String createDocument(String enterpriseId) throws Exception {
         UserFixture analyst = createUser();
-        String body = "{\"enterpriseId\":" + enterpriseId + ",\"analystId\":" + analyst.id() + ",\"title\":\"Documento teste " + System.nanoTime() + "\"}";
+        String body = "{\"enterpriseId\":" + enterpriseId + ",\"analystId\":" + analyst.id()
+                + ",\"title\":\"Documento teste " + System.nanoTime() + "\"}";
         return createResource("/api/documents", body);
     }
 }

@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import com.squad20.sistema_climbe.domain.user.entity.Role;
 
 @Data
 @Builder
@@ -35,4 +36,6 @@ public class RegisterRequest {
 
     @Size(max = 50)
     private String phone;
+
+    private Role role;
 }

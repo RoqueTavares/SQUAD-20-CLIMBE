@@ -2,6 +2,7 @@ package com.squad20.sistema_climbe.domain.user.dto;
 
 import jakarta.validation.constraints.Size;
 import lombok.*;
+import com.squad20.sistema_climbe.domain.user.entity.Role;
 
 @Getter
 @Setter
@@ -26,4 +27,6 @@ public class UserDTO {
 
     @Size(max = 255)
     private String status;
+
+    private Role role;
 }
