@@ -1,5 +1,5 @@
 # Build stage: compila o JAR dentro do container usando Gradle Wrapper
-FROM eclipse-temurin:17-jdk-jammy AS builder
+FROM eclipse-temurin:21-jdk-jammy AS builder
 
 WORKDIR /app
 
@@ -15,7 +15,7 @@ COPY src src
 RUN chmod +x gradlew && ./gradlew clean bootJar --no-daemon
 
 # Runtime stage: imagem enxuta para executar o JAR
-FROM eclipse-temurin:17-jre-jammy
+FROM eclipse-temurin:21-jre-jammy
 
 WORKDIR /app
 
