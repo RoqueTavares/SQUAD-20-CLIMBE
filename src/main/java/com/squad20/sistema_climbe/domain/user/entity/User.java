@@ -11,7 +11,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.Set;
 
-// Filtro automático: Hibernate injeta "AND deleted_at IS NULL" em todas as queries desta entidade.
+
 @SQLRestriction("deleted_at IS NULL")
 @Entity
 @Table(name = "usuarios")
