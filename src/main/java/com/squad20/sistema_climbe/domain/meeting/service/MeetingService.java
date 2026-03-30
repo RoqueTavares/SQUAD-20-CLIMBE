@@ -93,7 +93,8 @@ public class MeetingService {
     @Transactional
     public void delete(Long id) {
         Meeting meeting = findMeetingOrThrow(id);
-        meetingRepository.delete(meeting);
+        meeting.setDeletedAt(java.time.LocalDateTime.now());
+        meetingRepository.save(meeting);
     }
 
     private Meeting findMeetingOrThrow(Long id) {

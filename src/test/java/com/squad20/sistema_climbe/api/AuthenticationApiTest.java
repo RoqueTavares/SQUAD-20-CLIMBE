@@ -12,6 +12,8 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import jakarta.servlet.http.Cookie;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -20,13 +22,21 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 class AuthenticationApiTest {
 
+    /** Contador isolado para não colidir com o range 100_000_001+ da ApiTestBase. */
+    private static final java.util.concurrent.atomic.AtomicLong AUTH_SEED =
+            new java.util.concurrent.atomic.AtomicLong(500_000_001L);
+
+    private static long nextAuthSeed() {
+        return AUTH_SEED.getAndIncrement();
+    }
+
     @Autowired
     private MockMvc mockMvc;
 
     @Test
     @DisplayName("Register cria usuário e devolve cookies de autenticação")
     void registerCreatesUserAndReturnsCookies() throws Exception {
-        long n = Math.abs(System.nanoTime());
+        long n = nextAuthSeed();
 
         MvcResult result = mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -41,7 +51,7 @@ class AuthenticationApiTest {
     @Test
     @DisplayName("Login com credenciais válidas devolve cookies de autenticação")
     void loginReturnsCookiesForValidCredentials() throws Exception {
-        long n = Math.abs(System.nanoTime());
+        long n = nextAuthSeed();
         String email = "auth" + n + "@teste.com";
         String password = "Senha123";
 
@@ -63,7 +73,7 @@ class AuthenticationApiTest {
     @Test
     @DisplayName("Register com e-mail duplicado retorna 409")
     void registerWithDuplicateEmailReturnsConflict() throws Exception {
-        long n = Math.abs(System.nanoTime());
+        long n = nextAuthSeed();
         String body = registerBody(n);
 
         mockMvc.perform(post("/api/auth/register")
@@ -80,7 +90,7 @@ class AuthenticationApiTest {
     @Test
     @DisplayName("Refresh com cookie válido devolve novo cookie de access token")
     void refreshReturnsNewAccessTokenCookie() throws Exception {
-        long n = Math.abs(System.nanoTime());
+        long n = nextAuthSeed();
 
         MvcResult result = mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -107,6 +117,81 @@ class AuthenticationApiTest {
 
         assertCookieCleared(result, "accessToken");
         assertCookieCleared(result, "refreshToken");
+    }
+
+    @Test
+    @DisplayName("Usuário deletado não consegue autenticar")
+    void usuarioDeletadoNaoConsegueAutenticar() throws Exception {
+        long n = nextAuthSeed();
+        String email = "del.auth" + n + "@teste.com";
+        String password = "Senha123";
+
+        // Register
+        MvcResult registerResult = mockMvc.perform(post("/api/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(registerBody(n, email, password)))
+            .andExpect(status().isOk())
+            .andReturn();
+
+        String accessToken = extractCookie(registerResult, "accessToken");
+
+        // Get user ID via email lookup
+        MvcResult userResult = mockMvc.perform(get("/api/users/email/" + email)
+                .cookie(new Cookie("accessToken", accessToken)))
+            .andExpect(status().isOk())
+            .andReturn();
+        String userId = extractIdFromJson(userResult.getResponse().getContentAsString());
+
+        // Delete user
+        mockMvc.perform(delete("/api/users/" + userId)
+                .cookie(new Cookie("accessToken", accessToken)))
+            .andExpect(status().isNoContent());
+
+        // Try to login with deleted user
+        mockMvc.perform(post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"email\":\"" + email + "\",\"password\":\"" + password + "\"}"))
+            .andExpect(status().is4xxClientError());
+    }
+
+    @Test
+    @DisplayName("Refresh token é invalidado após soft delete do usuário")
+    void tokenRefreshInvalidadoAposDeleteUsuario() throws Exception {
+        long n = nextAuthSeed();
+        String email = "del.refresh" + n + "@teste.com";
+        String password = "Senha123";
+
+        MvcResult registerResult = mockMvc.perform(post("/api/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(registerBody(n, email, password)))
+            .andExpect(status().isOk())
+            .andReturn();
+
+        String accessToken = extractCookie(registerResult, "accessToken");
+        String refreshToken = extractCookie(registerResult, "refreshToken");
+
+        // Get user ID
+        MvcResult userResult = mockMvc.perform(get("/api/users/email/" + email)
+                .cookie(new Cookie("accessToken", accessToken)))
+            .andExpect(status().isOk())
+            .andReturn();
+        String userId = extractIdFromJson(userResult.getResponse().getContentAsString());
+
+        // Delete user (cascades hard delete of RefreshToken)
+        mockMvc.perform(delete("/api/users/" + userId)
+                .cookie(new Cookie("accessToken", accessToken)))
+            .andExpect(status().isNoContent());
+
+        // Try to refresh - refresh token should be gone (hard deleted)
+        mockMvc.perform(post("/api/auth/refresh")
+                .cookie(new Cookie("refreshToken", refreshToken)))
+            .andExpect(status().is4xxClientError());
+    }
+
+    private static String extractIdFromJson(String json) {
+        if (json == null) return null;
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("\"id\"\\s*:\\s*(\\d+)").matcher(json);
+        return m.find() ? m.group(1) : null;
     }
 
     private static String registerBody(long seed) {

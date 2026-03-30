@@ -1,11 +1,15 @@
 package com.squad20.sistema_climbe.domain.contract.entity;
 
+import com.squad20.sistema_climbe.domain.common.entity.BaseEntity;
 import com.squad20.sistema_climbe.domain.proposal.entity.Proposal;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDate;
 
+// Filtro automático: Hibernate injeta "AND deleted_at IS NULL" em todas as queries desta entidade.
+@SQLRestriction("deleted_at IS NULL")
 @Entity
 @Table(name = "contratos")
 @Getter
@@ -13,7 +17,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Contract {
+public class Contract extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -33,4 +37,3 @@ public class Contract {
     @Column(name = "status", length = 50)
     private String status;
 }
-

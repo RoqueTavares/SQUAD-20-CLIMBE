@@ -50,7 +50,8 @@ public class ServiceService {
     @Transactional
     public void delete(Long id) {
         OfferedService entity = findServiceOrThrow(id);
-        serviceRepository.delete(entity);
+        entity.setDeletedAt(java.time.LocalDateTime.now());
+        serviceRepository.save(entity);
     }
 
     private OfferedService findServiceOrThrow(Long id) {

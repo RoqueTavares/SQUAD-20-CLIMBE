@@ -2,6 +2,15 @@ package com.squad20.sistema_climbe.domain.user.service;
 
 import com.squad20.sistema_climbe.domain.user.dto.UserCreateRequest;
 import com.squad20.sistema_climbe.domain.user.dto.UserPatchRequest;
+
+import com.squad20.sistema_climbe.domain.contract.repository.ContractRepository;
+import com.squad20.sistema_climbe.domain.document.repository.DocumentRepository;
+import com.squad20.sistema_climbe.domain.notification.repository.NotificationRepository;
+import com.squad20.sistema_climbe.domain.proposal.repository.ProposalRepository;
+import com.squad20.sistema_climbe.domain.report.repository.ReportRepository;
+import com.squad20.sistema_climbe.domain.security.repository.RefreshTokenRepository;
+import com.squad20.sistema_climbe.domain.spreadsheet.repository.SpreadsheetRepository;
+
 import com.squad20.sistema_climbe.domain.user.entity.User;
 import com.squad20.sistema_climbe.domain.user.dto.UserDTO;
 import com.squad20.sistema_climbe.domain.user.mapper.UserMapper;
@@ -14,11 +23,20 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+
 @Service
 @RequiredArgsConstructor
 public class UserService {
 
     private final UserRepository userRepository;
+    private final NotificationRepository notificationRepository;
+    private final DocumentRepository documentRepository;
+    private final ProposalRepository proposalRepository;
+    private final ContractRepository contractRepository;
+    private final ReportRepository reportRepository;
+    private final SpreadsheetRepository spreadsheetRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
     private final UserMapper userMapper;
 
     @Transactional(readOnly = true)
@@ -59,11 +77,16 @@ public class UserService {
     public UserDTO update(Long id, UserPatchRequest patch) {
         User user = findUserOrThrow(id);
         validateEmailCpfUnique(patch.getEmail(), patch.getCpf(), id);
-        if (patch.getFullName() != null) user.setFullName(patch.getFullName());
-        if (patch.getCpf() != null) user.setCpf(patch.getCpf());
-        if (patch.getEmail() != null) user.setEmail(patch.getEmail());
-        if (patch.getPhone() != null) user.setPhone(patch.getPhone());
-        if (patch.getStatus() != null) user.setStatus(patch.getStatus());
+        if (patch.getFullName() != null)
+            user.setFullName(patch.getFullName());
+        if (patch.getCpf() != null)
+            user.setCpf(patch.getCpf());
+        if (patch.getEmail() != null)
+            user.setEmail(patch.getEmail());
+        if (patch.getPhone() != null)
+            user.setPhone(patch.getPhone());
+        if (patch.getStatus() != null)
+            user.setStatus(patch.getStatus());
         user = userRepository.save(user);
         return userMapper.toDTO(user);
     }
@@ -71,7 +94,22 @@ public class UserService {
     @Transactional
     public void delete(Long id) {
         User user = findUserOrThrow(id);
-        userRepository.delete(user);
+        // Cascade soft delete: deletar usuário propaga para todos os registros
+        // associados.
+        // Ordem importa: folhas primeiro, depois pai para evitar inconsistências.
+        LocalDateTime now = LocalDateTime.now();
+        reportRepository.softDeleteByUserId(id, now);
+        spreadsheetRepository.softDeleteByUserId(id, now);
+        contractRepository.softDeleteByUserId(id, now);
+        proposalRepository.softDeleteByUserId(id, now);
+        documentRepository.softDeleteByAnalystId(id, now);
+        notificationRepository.softDeleteByUserId(id, now);
+
+        // RefreshToken: hard delete intencional — é dado de sessão, não de negócio.
+        refreshTokenRepository.deleteByUser(user);
+
+        user.setDeletedAt(now);
+        userRepository.save(user);
     }
 
     private User findUserOrThrow(Long id) {

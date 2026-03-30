@@ -1,14 +1,18 @@
 package com.squad20.sistema_climbe.domain.meeting.entity;
 
+import com.squad20.sistema_climbe.domain.common.entity.BaseEntity;
 import com.squad20.sistema_climbe.domain.enterprise.entity.Enterprise;
 import com.squad20.sistema_climbe.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Set;
 
+// Filtro automático: Hibernate injeta "AND deleted_at IS NULL" em todas as queries desta entidade.
+@SQLRestriction("deleted_at IS NULL")
 @Entity
 @Table(name = "reunioes")
 @Getter
@@ -16,7 +20,7 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Meeting {
+public class Meeting extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -56,4 +60,3 @@ public class Meeting {
     )
     private Set<User> participants;
 }
-

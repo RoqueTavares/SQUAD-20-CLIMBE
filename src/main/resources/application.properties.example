@@ -11,7 +11,7 @@ spring.jpa.hibernate.ddl-auto=update
 cors.allowed-origins=
 
 jwt.secret=NDBONDYzNTI2NjU1NkE1ODZFMzI3MjM1NzUzODc4MkY0MTNGNDQyODQ3MkI0QjYyNTA2NDUzNjc1NjZCNTk3MA==
-jwt.expiration-ms=1800000
+jwt.expiration-ms=86400000
 jwt.refresh-expiration-ms=604800000
 
 springdoc.api-docs.path=/v3/api-docs

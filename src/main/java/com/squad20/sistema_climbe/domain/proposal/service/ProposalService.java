@@ -1,5 +1,6 @@
 package com.squad20.sistema_climbe.domain.proposal.service;
 
+import com.squad20.sistema_climbe.domain.contract.repository.ContractRepository;
 import com.squad20.sistema_climbe.domain.enterprise.entity.Enterprise;
 import com.squad20.sistema_climbe.domain.enterprise.repository.EnterpriseRepository;
 import com.squad20.sistema_climbe.domain.proposal.dto.ProposalCreateRequest;
@@ -8,6 +9,8 @@ import com.squad20.sistema_climbe.domain.proposal.dto.ProposalPatchRequest;
 import com.squad20.sistema_climbe.domain.proposal.entity.Proposal;
 import com.squad20.sistema_climbe.domain.proposal.mapper.ProposalMapper;
 import com.squad20.sistema_climbe.domain.proposal.repository.ProposalRepository;
+import com.squad20.sistema_climbe.domain.report.repository.ReportRepository;
+import com.squad20.sistema_climbe.domain.spreadsheet.repository.SpreadsheetRepository;
 import com.squad20.sistema_climbe.domain.user.entity.User;
 import com.squad20.sistema_climbe.domain.user.repository.UserRepository;
 import com.squad20.sistema_climbe.exception.ResourceNotFoundException;
@@ -27,6 +30,9 @@ public class ProposalService {
     private final ProposalRepository proposalRepository;
     private final EnterpriseRepository enterpriseRepository;
     private final UserRepository userRepository;
+    private final ContractRepository contractRepository;
+    private final ReportRepository reportRepository;
+    private final SpreadsheetRepository spreadsheetRepository;
     private final ProposalMapper proposalMapper;
 
     @Transactional(readOnly = true)
@@ -65,9 +71,6 @@ public class ProposalService {
         proposal.setId(null);
         proposal.setEnterprise(enterprise);
         proposal.setUser(user);
-        if (proposal.getCreatedAt() == null) {
-            proposal.setCreatedAt(LocalDateTime.now());
-        }
 
         proposal = proposalRepository.save(proposal);
         return proposalMapper.toDTO(proposal);
@@ -98,7 +101,15 @@ public class ProposalService {
     @Transactional
     public void delete(Long id) {
         Proposal proposal = findProposalOrThrow(id);
-        proposalRepository.delete(proposal);
+        // Cascade soft delete: deletar proposta propaga para todos os registros associados.
+        // Ordem importa: filhos antes do pai para evitar inconsistências.
+        LocalDateTime now = LocalDateTime.now();
+        reportRepository.softDeleteByProposalId(id, now);
+        spreadsheetRepository.softDeleteByProposalId(id, now);
+        contractRepository.softDeleteByProposalId(id, now);
+
+        proposal.setDeletedAt(now);
+        proposalRepository.save(proposal);
     }
 
     private Proposal findProposalOrThrow(Long id) {
@@ -106,4 +117,3 @@ public class ProposalService {
                 .orElseThrow(() -> new ResourceNotFoundException("Proposta não encontrada com id: " + id));
     }
 }
-

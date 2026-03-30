@@ -8,6 +8,8 @@ import com.squad20.sistema_climbe.domain.contract.mapper.ContractMapper;
 import com.squad20.sistema_climbe.domain.contract.repository.ContractRepository;
 import com.squad20.sistema_climbe.domain.proposal.entity.Proposal;
 import com.squad20.sistema_climbe.domain.proposal.repository.ProposalRepository;
+import com.squad20.sistema_climbe.domain.report.repository.ReportRepository;
+import com.squad20.sistema_climbe.domain.spreadsheet.repository.SpreadsheetRepository;
 import com.squad20.sistema_climbe.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -15,6 +17,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -23,6 +26,8 @@ public class ContractService {
 
     private final ContractRepository contractRepository;
     private final ProposalRepository proposalRepository;
+    private final ReportRepository reportRepository;
+    private final SpreadsheetRepository spreadsheetRepository;
     private final ContractMapper contractMapper;
 
     @Transactional(readOnly = true)
@@ -76,7 +81,14 @@ public class ContractService {
     @Transactional
     public void delete(Long id) {
         Contract contract = findContractOrThrow(id);
-        contractRepository.delete(contract);
+        // Cascade soft delete: deletar contrato propaga para relatórios e planilhas.
+        // Ordem importa: filhos antes do pai para evitar inconsistências.
+        LocalDateTime now = LocalDateTime.now();
+        reportRepository.softDeleteByContractId(id, now);
+        spreadsheetRepository.softDeleteByContractId(id, now);
+
+        contract.setDeletedAt(now);
+        contractRepository.save(contract);
     }
 
     private Contract findContractOrThrow(Long id) {
@@ -84,4 +96,3 @@ public class ContractService {
                 .orElseThrow(() -> new ResourceNotFoundException("Contrato não encontrado com id: " + id));
     }
 }
-

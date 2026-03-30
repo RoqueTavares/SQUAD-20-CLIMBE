@@ -82,7 +82,8 @@ public class NotificationService {
     @Transactional
     public void delete(Long id) {
         Notification notification = findNotificationOrThrow(id);
-        notificationRepository.delete(notification);
+        notification.setDeletedAt(LocalDateTime.now());
+        notificationRepository.save(notification);
     }
 
     private Notification findNotificationOrThrow(Long id) {

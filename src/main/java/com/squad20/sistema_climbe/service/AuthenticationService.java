@@ -2,7 +2,6 @@ package com.squad20.sistema_climbe.service;
 import com.squad20.sistema_climbe.dto.AuthenticationRequest;
 import com.squad20.sistema_climbe.dto.AuthenticationResponse;
 import com.squad20.sistema_climbe.dto.RegisterRequest;
-import com.squad20.sistema_climbe.dto.TokenRefreshRequest;
 import com.squad20.sistema_climbe.dto.TokenRefreshResponse;
 import com.squad20.sistema_climbe.exception.ConflictException;
 import com.squad20.sistema_climbe.exception.ResourceNotFoundException;

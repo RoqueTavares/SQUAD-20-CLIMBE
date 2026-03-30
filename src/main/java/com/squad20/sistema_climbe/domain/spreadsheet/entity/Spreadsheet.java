@@ -1,9 +1,13 @@
 package com.squad20.sistema_climbe.domain.spreadsheet.entity;
 
+import com.squad20.sistema_climbe.domain.common.entity.BaseEntity;
 import com.squad20.sistema_climbe.domain.contract.entity.Contract;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLRestriction;
 
+// Filtro automático: Hibernate injeta "AND deleted_at IS NULL" em todas as queries desta entidade.
+@SQLRestriction("deleted_at IS NULL")
 @Entity
 @Table(name = "planilhas")
 @Getter
@@ -11,7 +15,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Spreadsheet {
+public class Spreadsheet extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,4 +35,3 @@ public class Spreadsheet {
     @Column(name = "permissao_visualizacao", length = 100)
     private String viewPermission;
 }
-

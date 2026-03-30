@@ -76,7 +76,8 @@ public class SpreadsheetService {
     @Transactional
     public void delete(Long id) {
         Spreadsheet spreadsheet = findSpreadsheetOrThrow(id);
-        spreadsheetRepository.delete(spreadsheet);
+        spreadsheet.setDeletedAt(java.time.LocalDateTime.now());
+        spreadsheetRepository.save(spreadsheet);
     }
 
     private Spreadsheet findSpreadsheetOrThrow(Long id) {

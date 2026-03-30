@@ -3,6 +3,7 @@ package com.squad20.sistema_climbe.api;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -39,5 +40,26 @@ class SpreadsheetApiTest extends ApiTestBase {
         mockMvc.perform(get(getBasePath() + "/contract/" + contract.id()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].contractId").value(Integer.parseInt(contract.id())));
+    }
+
+    @Test
+    @DisplayName("Soft delete não aparece em $.content da listagem geral")
+    void softDeleteNaoApareceEmPageContent() throws Exception {
+        ContractFixture contract = createContract();
+        String spreadsheetId = createSpreadsheet(contract.id());
+
+        mockMvc.perform(get(getBasePath() + "?size=200"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content[?(@.id == " + spreadsheetId + ")]").isNotEmpty());
+
+        mockMvc.perform(delete(getBasePath() + "/" + spreadsheetId))
+            .andExpect(status().isNoContent());
+
+        mockMvc.perform(get(getBasePath() + "/" + spreadsheetId))
+            .andExpect(status().isNotFound());
+
+        mockMvc.perform(get(getBasePath() + "?size=200"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content[?(@.id == " + spreadsheetId + ")]").isEmpty());
     }
 }

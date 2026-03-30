@@ -50,7 +50,8 @@ public class PermissionService {
     @Transactional
     public void delete(Long id) {
         Permission permission = findPermissionOrThrow(id);
-        permissionRepository.delete(permission);
+        permission.setDeletedAt(java.time.LocalDateTime.now());
+        permissionRepository.save(permission);
     }
 
     private Permission findPermissionOrThrow(Long id) {
