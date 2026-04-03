@@ -19,6 +19,7 @@ public interface ProposalMapper {
     ProposalDTO toDTO(Proposal proposal);
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "status", ignore = true)
     @Mapping(target = "enterprise", ignore = true)
     @Mapping(target = "user", ignore = true)
     Proposal toEntity(ProposalCreateRequest request);

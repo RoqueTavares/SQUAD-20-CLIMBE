@@ -1,6 +1,6 @@
 package com.squad20.sistema_climbe.domain.proposal.dto;
 
-import jakarta.validation.constraints.Size;
+import com.squad20.sistema_climbe.domain.proposal.entity.ProposalStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -18,6 +18,5 @@ public class ProposalPatchRequest {
 
     private Long userId;
 
-    @Size(max = 50)
-    private String status;
+    private ProposalStatus status;
 }

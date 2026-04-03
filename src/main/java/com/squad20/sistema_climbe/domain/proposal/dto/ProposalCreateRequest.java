@@ -1,7 +1,6 @@
 package com.squad20.sistema_climbe.domain.proposal.dto;
 
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -22,9 +21,6 @@ public class ProposalCreateRequest {
 
     @NotNull(message = "ID do usuário é obrigatório")
     private Long userId;
-
-    @Size(max = 50)
-    private String status;
 
     private LocalDateTime createdAt;
 }

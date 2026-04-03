@@ -157,12 +157,40 @@ abstract class ApiTestBase {
     protected ProposalFixture createProposal() throws Exception {
         String enterpriseId = createEnterprise();
         UserFixture user = createUser();
-        long n = Math.abs(System.nanoTime());
         String body = "{\"enterpriseId\":" + enterpriseId + ",\"userId\":" + user.id()
-                + ",\"status\":\"ABERTA\",\"createdAt\":\"2026-03-20T10:15:30\"}";
+                + ",\"createdAt\":\"2026-03-20T10:15:30\"}";
 
         String proposalId = createResource("/api/proposals", body);
         return new ProposalFixture(proposalId, enterpriseId, user.id());
+    }
+
+    protected String createCompleteEnterprise() throws Exception {
+        long n = nextSeed();
+        String filial = String.format("%04d", n % 10000);
+        String dv = String.format("%02d", (n / 10000) % 100);
+
+        String body = """
+                {
+                  "legalName":"Empresa Completa Ltda",
+                  "tradeName":"Empresa Completa %d",
+                  "cnpj":"12.345.678/%s-%s",
+                  "email":"completa%d@teste.com",
+                  "phone":"11999990000",
+                  "representativeName":"Representante %d",
+                  "representativeCpf":"12345678909",
+                  "representativePhone":"11988880000",
+                  "address":{
+                    "street":"Rua Teste",
+                    "number":"123",
+                    "neighborhood":"Centro",
+                    "city":"Sao Paulo",
+                    "state":"SP",
+                    "zipCode":"01000-000"
+                  }
+                }
+                """.formatted(n, filial, dv, n, n);
+
+        return createResource("/api/enterprises", body);
     }
 
     protected ContractFixture createContract() throws Exception {

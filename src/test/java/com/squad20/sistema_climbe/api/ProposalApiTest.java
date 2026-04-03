@@ -2,9 +2,13 @@ package com.squad20.sistema_climbe.api;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.MediaType;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -21,7 +25,7 @@ class ProposalApiTest extends ApiTestBase {
         try {
             String enterpriseId = createEnterprise();
             UserFixture user = createUser();
-            return "{\"enterpriseId\":" + enterpriseId + ",\"userId\":" + user.id() + ",\"status\":\"ABERTA\",\"createdAt\":\"2026-03-20T10:15:30\"}";
+            return "{\"enterpriseId\":" + enterpriseId + ",\"userId\":" + user.id() + ",\"createdAt\":\"2026-03-20T10:15:30\"}";
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -29,7 +33,112 @@ class ProposalApiTest extends ApiTestBase {
 
     @Override
     protected String getPatchBody() {
-        return "{\"status\":\"APROVADA\"}";
+        return "{\"status\":\"IN_TRIAGE\"}";
+    }
+
+    @Test
+    @DisplayName("POST cria proposta com status inicial RECEIVED")
+    void postCriaPropostaComStatusRecebida() throws Exception {
+        String enterpriseId = createEnterprise();
+        UserFixture user = createUser();
+
+        mockMvc.perform(post(getBasePath())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"enterpriseId\":" + enterpriseId + ",\"userId\":" + user.id() + "}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.status").value("RECEIVED"));
+    }
+
+    @Test
+    @DisplayName("PATCH permite avançar de RECEIVED para IN_TRIAGE")
+    void patchAvancaRecebidaParaEmTriagem() throws Exception {
+        ProposalFixture proposal = createProposal();
+
+        mockMvc.perform(patch(getBasePath() + "/" + proposal.id())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"status\":\"IN_TRIAGE\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("IN_TRIAGE"));
+    }
+
+    @Test
+    @DisplayName("PATCH bloqueia avanço direto de RECEIVED para ELIGIBLE")
+    void patchBloqueiaAvancoDiretoParaApta() throws Exception {
+        ProposalFixture proposal = createProposal();
+
+        mockMvc.perform(patch(getBasePath() + "/" + proposal.id())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"status\":\"ELIGIBLE\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Bad Request"));
+    }
+
+    @Test
+    @DisplayName("PATCH bloqueia ELIGIBLE quando empresa ainda tem dados pendentes")
+    void patchBloqueiaAptaComDadosPendentes() throws Exception {
+        ProposalFixture proposal = createProposal();
+
+        mockMvc.perform(patch(getBasePath() + "/" + proposal.id())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"status\":\"IN_TRIAGE\"}"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(patch(getBasePath() + "/" + proposal.id())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"status\":\"ELIGIBLE\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(containsString("Dados iniciais incompletos")));
+    }
+
+    @Test
+    @DisplayName("PATCH permite seguir para PENDING_ADJUSTMENTS e voltar para IN_TRIAGE")
+    void patchPermitePendenciaEAjuste() throws Exception {
+        ProposalFixture proposal = createProposal();
+
+        mockMvc.perform(patch(getBasePath() + "/" + proposal.id())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"status\":\"IN_TRIAGE\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("IN_TRIAGE"));
+
+        mockMvc.perform(patch(getBasePath() + "/" + proposal.id())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"status\":\"PENDING_ADJUSTMENTS\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("PENDING_ADJUSTMENTS"));
+
+        mockMvc.perform(patch(getBasePath() + "/" + proposal.id())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"status\":\"IN_TRIAGE\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("IN_TRIAGE"));
+    }
+
+    @Test
+    @DisplayName("PATCH permite avançar para ELIGIBLE quando dados mínimos da empresa estão completos")
+    void patchPermiteAptaComDadosMinimosCompletos() throws Exception {
+        String enterpriseId = createCompleteEnterprise();
+        UserFixture user = createUser();
+
+        String response = mockMvc.perform(post(getBasePath())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"enterpriseId\":" + enterpriseId + ",\"userId\":" + user.id() + "}"))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+
+        String proposalId = extractIdFromJson(response);
+
+        mockMvc.perform(patch(getBasePath() + "/" + proposalId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"status\":\"IN_TRIAGE\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("IN_TRIAGE"));
+
+        mockMvc.perform(patch(getBasePath() + "/" + proposalId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"status\":\"ELIGIBLE\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ELIGIBLE"));
     }
 
     @Test
