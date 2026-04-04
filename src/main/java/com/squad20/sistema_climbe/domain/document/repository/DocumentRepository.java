@@ -13,6 +13,8 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
 
     List<Document> findByEnterprise_Id(Long enterpriseId);
 
+    List<Document> findByProposal_Id(Long proposalId);
+
     List<Document> findByAnalyst_Id(Long analystId);
 
     // Batch soft delete por empresa. @SQLRestriction não se aplica a UPDATE — a cláusula IS NULL é explícita aqui.

@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -19,8 +20,8 @@ class ContractApiTest extends ApiTestBase {
     @Override
     protected String getMinimalPostBody() {
         try {
-            ProposalFixture proposal = createProposal();
-            return "{\"proposalId\":" + proposal.id() + ",\"startDate\":\"2026-03-20\",\"endDate\":\"2026-12-20\",\"status\":\"ATIVO\"}";
+            ProposalFixture proposal = createApprovedCommercialProposal();
+            return "{\"proposalId\":" + proposal.id() + ",\"startDate\":\"2026-03-20\",\"endDate\":\"2026-12-20\",\"status\":\"PENDING_SIGNATURE\"}";
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -28,11 +29,22 @@ class ContractApiTest extends ApiTestBase {
 
     @Override
     protected String getPatchBody() {
-        return "{\"status\":\"ENCERRADO\"}";
+        return "{\"status\":\"DIGITALLY_SIGNED\"}";
     }
 
     @Test
-    @DisplayName("GET por proposta retorna contratos criados")
+    @DisplayName("POST blocks contract creation before commercial proposal approval")
+    void postBlocksContractCreationBeforeCommercialProposalApproval() throws Exception {
+        ProposalFixture proposal = createEligibleProposal();
+
+        mockMvc.perform(post(getBasePath())
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                .content("{\"proposalId\":" + proposal.id() + ",\"startDate\":\"2026-03-20\",\"endDate\":\"2026-12-20\",\"status\":\"PENDING_SIGNATURE\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("GET by proposal returns created contracts")
     void getByProposalReturnsCreatedContract() throws Exception {
         ContractFixture contract = createContract();
 
@@ -42,48 +54,48 @@ class ContractApiTest extends ApiTestBase {
     }
 
     @Test
-    @DisplayName("Soft delete não aparece em $.content da listagem geral")
-    void softDeleteNaoApareceEmPageContent() throws Exception {
+    @DisplayName("Soft delete hides contract from the paged listing")
+    void softDeleteHidesContractFromPagedListing() throws Exception {
         ContractFixture contract = createContract();
 
         mockMvc.perform(get(getBasePath() + "?size=200"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.content[?(@.id == " + contract.id() + ")]").isNotEmpty());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[?(@.id == " + contract.id() + ")]").isNotEmpty());
 
         mockMvc.perform(delete(getBasePath() + "/" + contract.id()))
-            .andExpect(status().isNoContent());
+                .andExpect(status().isNoContent());
 
         mockMvc.perform(get(getBasePath() + "/" + contract.id()))
-            .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound());
 
         mockMvc.perform(get(getBasePath() + "?size=200"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.content[?(@.id == " + contract.id() + ")]").isEmpty());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[?(@.id == " + contract.id() + ")]").isEmpty());
     }
 
     @Test
-    @DisplayName("Soft delete em contrato oculta relatório associado")
-    void softDeleteCascataRelatorioOcultaAposDelete() throws Exception {
+    @DisplayName("Soft delete on contract hides the associated report")
+    void softDeleteCascadeHidesAssociatedReport() throws Exception {
         ContractFixture contract = createContract();
         String reportId = createReport(contract.id());
 
         mockMvc.perform(delete(getBasePath() + "/" + contract.id()))
-            .andExpect(status().isNoContent());
+                .andExpect(status().isNoContent());
 
         mockMvc.perform(get("/api/reports/" + reportId))
-            .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound());
     }
 
     @Test
-    @DisplayName("Soft delete em contrato oculta planilha associada")
-    void softDeleteCascataPlanilhaOcultaAposDelete() throws Exception {
+    @DisplayName("Soft delete on contract hides the associated spreadsheet")
+    void softDeleteCascadeHidesAssociatedSpreadsheet() throws Exception {
         ContractFixture contract = createContract();
         String spreadsheetId = createSpreadsheet(contract.id());
 
         mockMvc.perform(delete(getBasePath() + "/" + contract.id()))
-            .andExpect(status().isNoContent());
+                .andExpect(status().isNoContent());
 
         mockMvc.perform(get("/api/spreadsheets/" + spreadsheetId))
-            .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound());
     }
 }

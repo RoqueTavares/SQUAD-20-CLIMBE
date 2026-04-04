@@ -14,12 +14,14 @@ public interface DocumentMapper {
 
     @Mapping(source = "enterprise.id", target = "enterpriseId")
     @Mapping(source = "enterprise", target = "enterpriseName", qualifiedByName = "enterpriseDisplayName")
+    @Mapping(source = "proposal.id", target = "proposalId")
     @Mapping(source = "analyst.id", target = "analystId")
     @Mapping(source = "analyst.fullName", target = "analystName")
     DocumentDTO toDTO(Document document);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "enterprise", ignore = true)
+    @Mapping(target = "proposal", ignore = true)
     @Mapping(target = "analyst", ignore = true)
     Document toEntity(DocumentCreateRequest request);
 

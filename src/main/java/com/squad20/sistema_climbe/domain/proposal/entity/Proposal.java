@@ -31,6 +31,10 @@ public class Proposal extends BaseEntity {
     @JoinColumn(name = "usuario_id", nullable = false)
     private User user;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "analista_responsavel_id")
+    private User responsibleAnalyst;
+
     @Column(name = "status", length = 50)
     private String status;
 }

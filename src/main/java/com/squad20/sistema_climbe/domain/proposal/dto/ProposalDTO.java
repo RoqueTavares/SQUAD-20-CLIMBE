@@ -22,6 +22,10 @@ public class ProposalDTO {
 
     private String userName;
 
+    private Long responsibleAnalystId;
+
+    private String responsibleAnalystName;
+
     @Size(max = 50)
     private String status;
 
