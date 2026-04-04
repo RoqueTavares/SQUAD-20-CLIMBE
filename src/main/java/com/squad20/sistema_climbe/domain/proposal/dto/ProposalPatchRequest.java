@@ -18,5 +18,7 @@ public class ProposalPatchRequest {
 
     private Long userId;
 
+    private Long responsibleAnalystId;
+
     private ProposalStatus status;
 }

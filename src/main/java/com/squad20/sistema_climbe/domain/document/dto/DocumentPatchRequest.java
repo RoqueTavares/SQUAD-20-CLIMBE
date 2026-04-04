@@ -16,6 +16,8 @@ public class DocumentPatchRequest {
 
     private Long enterpriseId;
 
+    private Long proposalId;
+
     @Size(max = 100)
     private String documentType;
 

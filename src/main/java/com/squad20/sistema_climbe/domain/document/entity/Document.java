@@ -2,6 +2,7 @@ package com.squad20.sistema_climbe.domain.document.entity;
 
 import com.squad20.sistema_climbe.domain.common.entity.BaseEntity;
 import com.squad20.sistema_climbe.domain.enterprise.entity.Enterprise;
+import com.squad20.sistema_climbe.domain.proposal.entity.Proposal;
 import com.squad20.sistema_climbe.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -26,6 +27,10 @@ public class Document extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "empresa_id", nullable = false)
     private Enterprise enterprise;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "proposta_id")
+    private Proposal proposal;
 
     @Column(name = "tipo_documento", length = 100)
     private String documentType;

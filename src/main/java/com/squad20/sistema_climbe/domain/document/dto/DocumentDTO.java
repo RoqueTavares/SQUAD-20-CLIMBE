@@ -16,6 +16,8 @@ public class DocumentDTO {
 
     private String enterpriseName;
 
+    private Long proposalId;
+
     @Size(max = 100)
     private String documentType;
 

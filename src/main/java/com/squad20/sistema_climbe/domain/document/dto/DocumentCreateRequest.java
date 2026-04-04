@@ -18,6 +18,8 @@ public class DocumentCreateRequest {
     @NotNull(message = "ID da empresa é obrigatório")
     private Long enterpriseId;
 
+    private Long proposalId;
+
     @Size(max = 100)
     private String documentType;
 

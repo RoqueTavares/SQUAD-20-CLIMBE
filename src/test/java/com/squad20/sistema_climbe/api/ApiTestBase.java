@@ -1,6 +1,7 @@
 package com.squad20.sistema_climbe.api;
 
 import com.squad20.sistema_climbe.SistemaClimbeApplication;
+import com.squad20.sistema_climbe.domain.user.entity.Role;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -144,11 +145,16 @@ abstract class ApiTestBase {
     }
 
     protected UserFixture createUser() throws Exception {
+        return createUser(null);
+    }
+
+    protected UserFixture createUser(Role role) throws Exception {
         long n = nextSeed();
         String email = "user" + n + "@teste.com";
         String cpf = generateValidCpf(n);
+        String roleField = role != null ? ",\"role\":\"" + role.name() + "\"" : "";
         String body = "{\"fullName\":\"Usuario Teste " + n + "\",\"cpf\":\"" + cpf
-                + "\",\"email\":\"" + email + "\"}";
+                + "\",\"email\":\"" + email + "\"" + roleField + "}";
 
         String id = createResource("/api/users", body);
         return new UserFixture(id, email, cpf);
@@ -194,12 +200,52 @@ abstract class ApiTestBase {
     }
 
     protected ContractFixture createContract() throws Exception {
-        ProposalFixture proposal = createProposal();
+        ProposalFixture proposal = createApprovedCommercialProposal();
         String body = "{\"proposalId\":" + proposal.id()
-                + ",\"startDate\":\"2026-03-20\",\"endDate\":\"2026-12-20\",\"status\":\"ATIVO\"}";
+                + ",\"startDate\":\"2026-03-20\",\"endDate\":\"2026-12-20\",\"status\":\"PENDING_SIGNATURE\"}";
 
         String contractId = createResource("/api/contracts", body);
         return new ContractFixture(contractId, proposal.id(), proposal.enterpriseId(), proposal.userId());
+    }
+
+    protected ProposalFixture createEligibleProposal() throws Exception {
+        String enterpriseId = createCompleteEnterprise();
+        UserFixture user = createUser();
+        String body = "{\"enterpriseId\":" + enterpriseId + ",\"userId\":" + user.id()
+                + ",\"createdAt\":\"2026-03-20T10:15:30\"}";
+
+        String proposalId = createResource("/api/proposals", body);
+
+        mockMvc.perform(patch("/api/proposals/" + proposalId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"status\":\"IN_TRIAGE\"}"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(patch("/api/proposals/" + proposalId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"status\":\"ELIGIBLE\"}"))
+                .andExpect(status().isOk());
+
+        return new ProposalFixture(proposalId, enterpriseId, user.id());
+    }
+
+    protected String createCommercialProposalDocument(String proposalId, String enterpriseId) throws Exception {
+        String body = "{\"enterpriseId\":" + enterpriseId + ",\"proposalId\":" + proposalId
+                + ",\"documentType\":\"COMMERCIAL_PROPOSAL\",\"url\":\"https://teste.com/commercial-proposal-"
+                + System.nanoTime() + ".pdf\"}";
+        return createResource("/api/documents", body);
+    }
+
+    protected ProposalFixture createApprovedCommercialProposal() throws Exception {
+        ProposalFixture proposal = createEligibleProposal();
+        createCommercialProposalDocument(proposal.id(), proposal.enterpriseId());
+
+        mockMvc.perform(patch("/api/proposals/" + proposal.id())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"status\":\"COMMERCIAL_PROPOSAL_APPROVED\"}"))
+                .andExpect(status().isOk());
+
+        return proposal;
     }
 
     protected String createResource(String path, String body) throws Exception {

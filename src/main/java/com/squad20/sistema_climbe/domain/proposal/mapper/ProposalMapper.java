@@ -16,12 +16,15 @@ public interface ProposalMapper {
     @Mapping(source = "enterprise", target = "enterpriseName", qualifiedByName = "enterpriseDisplayName")
     @Mapping(source = "user.id", target = "userId")
     @Mapping(source = "user.fullName", target = "userName")
+    @Mapping(source = "responsibleAnalyst.id", target = "responsibleAnalystId")
+    @Mapping(source = "responsibleAnalyst.fullName", target = "responsibleAnalystName")
     ProposalDTO toDTO(Proposal proposal);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "status", ignore = true)
     @Mapping(target = "enterprise", ignore = true)
     @Mapping(target = "user", ignore = true)
+    @Mapping(target = "responsibleAnalyst", ignore = true)
     Proposal toEntity(ProposalCreateRequest request);
 
     @Named("enterpriseDisplayName")
