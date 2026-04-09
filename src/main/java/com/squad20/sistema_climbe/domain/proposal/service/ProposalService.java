@@ -4,6 +4,7 @@ import com.squad20.sistema_climbe.domain.contract.repository.ContractRepository;
 import com.squad20.sistema_climbe.domain.enterprise.entity.Address;
 import com.squad20.sistema_climbe.domain.enterprise.entity.Enterprise;
 import com.squad20.sistema_climbe.domain.enterprise.repository.EnterpriseRepository;
+import com.squad20.sistema_climbe.domain.notification.service.EmailSenderService;
 import com.squad20.sistema_climbe.domain.notification.dto.NotificationCreateRequest;
 import com.squad20.sistema_climbe.domain.notification.service.NotificationService;
 import com.squad20.sistema_climbe.domain.proposal.dto.ProposalCreateRequest;
@@ -47,6 +48,7 @@ public class ProposalService {
     private final ReportRepository reportRepository;
     private final SpreadsheetRepository spreadsheetRepository;
     private final NotificationService notificationService;
+    private final EmailSenderService emailSenderService;
     private final ProposalMapper proposalMapper;
 
     @Transactional(readOnly = true)
@@ -203,6 +205,7 @@ public class ProposalService {
 
         if (newStatus == ProposalStatus.COMMERCIAL_PROPOSAL_APPROVED) {
             notifyComplianceAboutContractCreation(proposal);
+            notifyEnterpriseAboutProposalApproval(proposal);
         }
 
         if (newStatus == ProposalStatus.COMMERCIAL_PROPOSAL_REJECTED) {
@@ -288,6 +291,16 @@ public class ProposalService {
                     .type("CONTRACT_CREATION_REQUIRED")
                     .message("Proposta " + proposal.getId() + " foi aprovada e requer criação de contrato.")
                     .build());
+        }
+    }
+
+    private void notifyEnterpriseAboutProposalApproval(Proposal proposal) {
+        if (proposal.getEnterprise() != null && hasText(proposal.getEnterprise().getEmail())) {
+            String subject = "Sua proposta foi aceita! - Sistema Climbe";
+            String body = String.format("Olá %s,\n\nTemos o prazer de informar que sua proposta comercial '%s' foi APROVADA com sucesso e avançará para as próximas etapas de criação de contrato.\n\nEquipe Climbe",
+                    proposal.getEnterprise().getTradeName() != null ? proposal.getEnterprise().getTradeName() : proposal.getEnterprise().getLegalName(),
+                    proposal.getId());
+            emailSenderService.sendEmail(proposal.getEnterprise().getEmail(), subject, body);
         }
     }
 

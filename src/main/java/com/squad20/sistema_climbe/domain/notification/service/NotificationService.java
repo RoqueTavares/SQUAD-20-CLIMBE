@@ -25,6 +25,7 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
     private final NotificationMapper notificationMapper;
+    private final EmailSenderService emailSenderService;
 
     @Transactional(readOnly = true)
     public Page<NotificationDTO> findAll(Pageable pageable) {
@@ -58,6 +59,11 @@ public class NotificationService {
         }
 
         notification = notificationRepository.save(notification);
+
+        // O e-mail usa disparo asśíncrono
+        String subject = "Nova Notificação: Sistema Climbe";
+        emailSenderService.sendEmail(user.getEmail(), subject, notification.getMessage());
+
         return notificationMapper.toDTO(notification);
     }
 

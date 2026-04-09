@@ -54,8 +54,8 @@ public class CustomOAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHa
                 .httpOnly(true)
                 .secure(false) 
                 .path("/")
-                .maxAge(30 * 60)
-                .sameSite("Strict")
+                .maxAge(24 * 60 * 60)
+                .sameSite("Lax")
                 .build();
 
         ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", refreshToken.getToken())
@@ -63,7 +63,7 @@ public class CustomOAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHa
                 .secure(false)
                 .path("/api/auth/refresh")
                 .maxAge(7 * 24 * 60 * 60)
-                .sameSite("Strict")
+                .sameSite("Lax")
                 .build();
 
         response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());

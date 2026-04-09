@@ -4,6 +4,7 @@ import com.squad20.sistema_climbe.domain.notification.dto.NotificationCreateRequ
 import com.squad20.sistema_climbe.domain.notification.dto.NotificationDTO;
 import com.squad20.sistema_climbe.domain.notification.dto.NotificationPatchRequest;
 import com.squad20.sistema_climbe.domain.notification.service.NotificationService;
+import com.squad20.sistema_climbe.domain.notification.service.EmailSenderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -24,6 +25,7 @@ import java.util.List;
 public class NotificationController {
 
     private final NotificationService notificationService;
+    private final EmailSenderService emailSenderService;
 
     @Operation(summary = "Listar notificações", description = "Retorna notificações paginadas (page, size, sort)")
     @GetMapping
@@ -65,6 +67,16 @@ public class NotificationController {
             @Parameter(description = "ID da notificação") @PathVariable Long id) {
         notificationService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Testar disparo E-mail Rápido", description = "Força um envio de e-mail p/ o endereço fornecido para você testar as credenciais SMTP localmente.")
+    @GetMapping("/test-email")
+    public ResponseEntity<String> testEmail(
+            @RequestParam String paraEmail, 
+            @RequestParam(defaultValue = "Teste do Sistema Climbe") String assunto) {
+        
+        emailSenderService.sendEmail(paraEmail, assunto, "Teste Email sistema clime! API FUNCIONANDO!");
+        return ResponseEntity.ok("Disparo engatilhado! Verifique o console da IDE para monitoramento assíncrono e confira a caixa de entrada de: " + paraEmail);
     }
 }
 
