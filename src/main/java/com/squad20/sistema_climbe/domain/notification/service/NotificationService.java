@@ -14,6 +14,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -26,6 +27,7 @@ public class NotificationService {
     private final UserRepository userRepository;
     private final NotificationMapper notificationMapper;
     private final EmailSenderService emailSenderService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Transactional(readOnly = true)
     public Page<NotificationDTO> findAll(Pageable pageable) {
@@ -60,11 +62,20 @@ public class NotificationService {
 
         notification = notificationRepository.save(notification);
 
-        // O e-mail usa disparo asśíncrono
+        
         String subject = "Nova Notificação: Sistema Climbe";
         emailSenderService.sendEmail(user.getEmail(), subject, notification.getMessage());
 
-        return notificationMapper.toDTO(notification);
+        NotificationDTO notificationDTO = notificationMapper.toDTO(notification);
+
+        
+        messagingTemplate.convertAndSendToUser(
+                user.getEmail(),
+                "/queue/notifications",
+                notificationDTO
+        );
+
+        return notificationDTO;
     }
 
     @Transactional
