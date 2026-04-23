@@ -12,8 +12,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -52,10 +54,19 @@ public class DocumentController {
         return ResponseEntity.ok(documentService.findById(id));
     }
 
-    @Operation(summary = "Criar documento", description = "Cadastra um novo documento")
-    @PostMapping
-    public ResponseEntity<DocumentDTO> save(@Valid @RequestBody DocumentCreateRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(documentService.save(request));
+    @Operation(summary = "Criar documento", description = "Cadastra um novo documento subindo o arquivo para o GCP Bucket")
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<DocumentDTO> save(
+            @RequestPart("data") @Valid DocumentCreateRequest request,
+            @RequestPart(value = "file", required = false) MultipartFile file) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(documentService.saveWithFile(request, file));
+    }
+
+    @Operation(summary = "Visualizar documento", description = "Gera um link temporário seguro para visualização do documento")
+    @GetMapping("/{id}/view")
+    public ResponseEntity<String> getViewUrl(
+            @Parameter(description = "ID do documento") @PathVariable Long id) {
+        return ResponseEntity.ok(documentService.generateViewUrl(id));
     }
 
     @Operation(summary = "Atualizar documento", description = "Atualiza um documento existente (parcial)")

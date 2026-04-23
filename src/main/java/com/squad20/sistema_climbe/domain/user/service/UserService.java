@@ -38,6 +38,7 @@ public class UserService {
     private final SpreadsheetRepository spreadsheetRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final UserMapper userMapper;
+    private final com.squad20.sistema_climbe.domain.notification.service.EmailSenderService emailSenderService;
 
     @Transactional(readOnly = true)
     public Page<UserDTO> findAll(Pageable pageable) {
@@ -110,6 +111,23 @@ public class UserService {
 
         user.setDeletedAt(now);
         userRepository.save(user);
+    }
+
+    @Transactional
+    public void approveUser(Long id) {
+        User user = findUserOrThrow(id);
+        if ("ATIVO".equals(user.getStatus())) {
+            throw new com.squad20.sistema_climbe.exception.BadRequestException("Usuário já está ativo.");
+        }
+        
+        user.setStatus("ATIVO");
+        userRepository.save(user);
+
+        if (user.getEmail() != null && !user.getEmail().isBlank()) {
+            String subject = "Bem-vindo ao Sistema Climbe!";
+            String body = "Olá " + user.getFullName() + ",\n\nSeu cadastro foi aprovado pelo administrador! Você já pode acessar o sistema utilizando seu e-mail e as credenciais configuradas.\n\nEquipe Climbe";
+            emailSenderService.sendEmail(user.getEmail(), subject, body);
+        }
     }
 
     private User findUserOrThrow(Long id) {

@@ -31,6 +31,7 @@ public class CustomOAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHa
     private final RefreshTokenService refreshTokenService;
     private final PasswordEncoder passwordEncoder;
     private final OAuth2AuthorizedClientService authorizedClientService;
+    private final com.squad20.sistema_climbe.domain.notification.service.NotificationService notificationService;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
@@ -44,9 +45,11 @@ public class CustomOAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHa
                     .email(email)
                     .cpf("OA" + UUID.randomUUID().toString().substring(0, 12)) 
                     .passwordHash(passwordEncoder.encode(UUID.randomUUID().toString()))
-                    .status("ATIVO")
+                    .status("PENDENTE")
                     .build();
-            return userRepository.save(newUser);
+            User savedUser = userRepository.save(newUser);
+            notifyAdmins(savedUser);
+            return savedUser;
         });
 
         if (authentication instanceof OAuth2AuthenticationToken oauthToken) {
@@ -82,5 +85,15 @@ public class CustomOAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHa
         response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
 
         getRedirectStrategy().sendRedirect(request, response, "http://localhost:5173/dashboard"); 
+    }
+
+    private void notifyAdmins(User newUser) {
+        userRepository.findByRole(com.squad20.sistema_climbe.domain.user.entity.Role.CEO).forEach(ceo -> {
+            notificationService.save(com.squad20.sistema_climbe.domain.notification.dto.NotificationCreateRequest.builder()
+                    .userId(ceo.getId())
+                    .type("NEW_USER_PENDING")
+                    .message("O usuário " + newUser.getFullName() + " (" + newUser.getEmail() + ") se cadastrou e aguarda aprovação de acesso.")
+                    .build());
+        });
     }
 }

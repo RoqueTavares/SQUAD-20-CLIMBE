@@ -60,6 +60,7 @@ public class MeetingService {
                 .orElseThrow(() -> new ResourceNotFoundException("Empresa não encontrada com id: " + request.getEnterpriseId()));
 
         Set<User> participants = resolveParticipants(request.getParticipantIds());
+        validateNoTimeConflict(request.getDate(), request.getTime(), request.getEndTime(), request.getParticipantIds(), null);
 
         Meeting meeting = meetingMapper.toEntity(request);
         meeting.setId(null);
@@ -119,6 +120,12 @@ public class MeetingService {
             existing.setParticipants(resolveParticipants(patch.getParticipantIds()));
         }
 
+        java.time.LocalDate checkDate = existing.getDate();
+        java.time.LocalTime checkStart = existing.getTime();
+        java.time.LocalTime checkEnd = existing.getEndTime();
+        List<Long> participantIds = existing.getParticipants().stream().map(User::getId).toList();
+        validateNoTimeConflict(checkDate, checkStart, checkEnd, participantIds, existing.getId());
+
         existing = meetingRepository.save(existing);
         return meetingMapper.toDTO(existing);
     }
@@ -146,6 +153,29 @@ public class MeetingService {
             users.add(user);
         }
         return users;
+    }
+
+    private void validateNoTimeConflict(java.time.LocalDate date, java.time.LocalTime startTime, java.time.LocalTime endTime, List<Long> participantIds, Long excludeMeetingId) {
+        if (date == null || startTime == null || participantIds == null || participantIds.isEmpty()) return;
+        
+        java.time.LocalTime newStart = startTime;
+        java.time.LocalTime newEnd = endTime != null ? endTime : startTime.plusHours(1);
+
+        List<Meeting> dayMeetings = meetingRepository.findMeetingsByDateAndParticipants(date, participantIds);
+        for (Meeting m : dayMeetings) {
+            if (excludeMeetingId != null && m.getId().equals(excludeMeetingId)) continue;
+            
+            java.time.LocalTime existingStart = m.getTime();
+            java.time.LocalTime existingEnd = m.getEndTime() != null ? m.getEndTime() : existingStart.plusHours(1);
+
+            // A_start < B_end AND A_end > B_start => Overlap!
+            if (newStart.isBefore(existingEnd) && newEnd.isAfter(existingStart)) {
+                throw new com.squad20.sistema_climbe.exception.ConflictException(
+                    "Conflito de agenda: Um ou mais participantes já possuem uma reunião marcada neste horário (" + 
+                    existingStart + " - " + existingEnd + ")."
+                );
+            }
+        }
     }
 }
 
