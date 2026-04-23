@@ -59,6 +59,9 @@ public class User extends BaseEntity implements UserDetails {
     )
     private Set<Permission> permissions;
 
+    @Column(name = "google_refresh_token", length = 1000)
+    private String googleRefreshToken;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         java.util.List<GrantedAuthority> authorities = new java.util.ArrayList<>();

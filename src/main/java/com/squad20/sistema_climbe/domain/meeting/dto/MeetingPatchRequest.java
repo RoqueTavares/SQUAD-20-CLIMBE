@@ -27,6 +27,8 @@ public class MeetingPatchRequest {
 
     private LocalTime time;
 
+    private LocalTime endTime;
+
     private Boolean inPerson;
 
     @Size(max = 500)

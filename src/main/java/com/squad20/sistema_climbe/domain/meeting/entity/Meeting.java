@@ -40,6 +40,9 @@ public class Meeting extends BaseEntity {
     @Column(name = "hora")
     private LocalTime time;
 
+    @Column(name = "hora_fim")
+    private LocalTime endTime;
+
     @Column(name = "presencial")
     private Boolean inPerson;
 

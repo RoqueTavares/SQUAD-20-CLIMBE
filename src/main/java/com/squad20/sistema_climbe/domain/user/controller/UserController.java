@@ -13,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import jakarta.validation.Valid;
 
@@ -52,6 +53,7 @@ public class UserController {
     }
 
     @Operation(summary = "Criar usuário", description = "Cadastra um novo usuário")
+    @PreAuthorize("hasRole('CEO') or hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<UserDTO> save(@Valid @RequestBody UserCreateRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(userService.save(request));
@@ -63,6 +65,15 @@ public class UserController {
             @Parameter(description = "ID do usuário") @PathVariable Long id,
             @Valid @RequestBody UserPatchRequest patch) {
         return ResponseEntity.ok(userService.update(id, patch));
+    }
+
+    @Operation(summary = "Aprovar usuário pendente", description = "Aprova um usuário que veio via OAuth e dispara email de boas-vindas")
+    @PreAuthorize("hasRole('CEO')")
+    @PatchMapping("/{id}/approve")
+    public ResponseEntity<Void> approveUser(
+            @Parameter(description = "ID do usuário a ser aprovado") @PathVariable Long id) {
+        userService.approveUser(id);
+        return ResponseEntity.noContent().build();
     }
 
     @Operation(summary = "Excluir usuário", description = "Remove um usuário pelo ID")

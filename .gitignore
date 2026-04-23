@@ -66,3 +66,4 @@ replay_pid*
 # Segredos da aplicacao
 application.properties
 .env
+gcp-credentials.json

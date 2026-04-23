@@ -21,6 +21,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.web.multipart.MultipartFile;
+import com.squad20.sistema_climbe.service.GoogleCloudStorageService;
+
+import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 
@@ -36,6 +40,7 @@ public class DocumentService {
     private final UserRepository userRepository;
     private final ProposalService proposalService;
     private final DocumentMapper documentMapper;
+    private final GoogleCloudStorageService storageService;
 
     @Transactional(readOnly = true)
     public Page<DocumentDTO> findAll(Pageable pageable) {
@@ -83,6 +88,37 @@ public class DocumentService {
         }
 
         return documentMapper.toDTO(document);
+    }
+
+    @Transactional
+    public DocumentDTO saveWithFile(DocumentCreateRequest request, MultipartFile file) {
+        if (file != null && !file.isEmpty()) {
+            try {
+                String internalPath = storageService.uploadPrivateFile(file, "documentos_empresa_" + request.getEnterpriseId());
+                request.setUrl(internalPath); // Salva o caminho interno no GCP
+            } catch (IOException e) {
+                throw new com.squad20.sistema_climbe.exception.BadRequestException("Erro ao fazer upload do arquivo para o GCP: " + e.getMessage());
+            }
+        }
+        return save(request);
+    }
+
+    @Transactional(readOnly = true)
+    public String generateViewUrl(Long id) {
+        Document document = findDocumentOrThrow(id);
+        if (document.getUrl() == null || document.getUrl().isEmpty()) {
+            throw new ResourceNotFoundException("Este documento não possui um arquivo anexado.");
+        }
+        
+        try {
+            // Se for uma URL antiga externa, devolve direto. Se for path do bucket, assina.
+            if (document.getUrl().startsWith("http")) {
+                return document.getUrl();
+            }
+            return storageService.generateSignedUrl(document.getUrl());
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao gerar link seguro de visualização", e);
+        }
     }
 
     @Transactional

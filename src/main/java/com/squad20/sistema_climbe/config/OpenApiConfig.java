@@ -15,6 +15,7 @@ public class OpenApiConfig {
     @Bean
     public OpenAPI sistemaClimbeOpenAPI() {
         final String securitySchemeName = "bearerAuth";
+        final String cookieAuthName = "cookieAuth";
 
         return new OpenAPI()
                 .info(new Info()
@@ -23,13 +24,18 @@ public class OpenApiConfig {
                         .version("1.0.0")
                         .contact(new Contact()
                                 .name("Squad20")))
-                .addSecurityItem(new SecurityRequirement().addList(securitySchemeName))
+                .addSecurityItem(new SecurityRequirement().addList(securitySchemeName).addList(cookieAuthName))
                 .components(new Components()
                         .addSecuritySchemes(securitySchemeName, new SecurityScheme()
                                 .name(securitySchemeName)
                                 .type(SecurityScheme.Type.HTTP)
                                 .scheme("bearer")
                                 .bearerFormat("JWT")
-                                .description("Faça o login e cole o token JWT aqui (sem o prefixo Bearer).")));
+                                .description("Faça o login e cole o token JWT aqui (sem o prefixo Bearer)."))
+                        .addSecuritySchemes(cookieAuthName, new SecurityScheme()
+                                .name("accessToken")
+                                .type(SecurityScheme.Type.APIKEY)
+                                .in(SecurityScheme.In.COOKIE)
+                                .description("Token JWT armazenado automaticamente como Cookie após login Oauth2 ou Auth normal.")));
     }
 }

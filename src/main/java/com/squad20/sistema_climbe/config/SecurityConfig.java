@@ -11,7 +11,11 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizationRequestResolver;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
+import java.util.LinkedHashMap;
+import java.util.Map;
 /** Fora do perfil {@code test}: lá só vale {@link TestSecurityConfig} (evita OAuth2/client registry na subida do contexto). */
 @Configuration
 @EnableWebSecurity
@@ -24,8 +28,9 @@ public class SecurityConfig {
     private final CustomOAuth2SuccessHandler customOAuth2SuccessHandler;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, ClientRegistrationRepository clientRegistrationRepository) throws Exception {
         http
+                .cors(org.springframework.security.config.Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
@@ -33,11 +38,16 @@ public class SecurityConfig {
                                 "/v3/api-docs/**", 
                                 "/swagger-ui/**", 
                                 "/swagger-ui.html",
-                                "/login/oauth2/**" 
+                                "/login/oauth2/**",
+                                "/api/notifications/test-email",
+                                "/api/gcp-test/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
+                        .authorizationEndpoint(authorization -> authorization
+                                .authorizationRequestResolver(customAuthorizationRequestResolver(clientRegistrationRepository))
+                        )
                         .successHandler(customOAuth2SuccessHandler)
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -45,5 +55,16 @@ public class SecurityConfig {
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    private OAuth2AuthorizationRequestResolver customAuthorizationRequestResolver(ClientRegistrationRepository clientRegistrationRepository) {
+        DefaultOAuth2AuthorizationRequestResolver resolver = new DefaultOAuth2AuthorizationRequestResolver(clientRegistrationRepository, "/login/oauth2/authorization");
+        resolver.setAuthorizationRequestCustomizer(customizer -> {
+            Map<String, Object> additionalParameters = new LinkedHashMap<>();
+            additionalParameters.put("access_type", "offline");
+            additionalParameters.put("prompt", "consent");
+            customizer.additionalParameters(params -> params.putAll(additionalParameters));
+        });
+        return resolver;
     }
 }
