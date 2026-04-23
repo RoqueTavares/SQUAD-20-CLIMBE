@@ -35,7 +35,8 @@ public class SecurityConfig {
                                 "/swagger-ui/**", 
                                 "/swagger-ui.html",
                                 "/login/oauth2/**",
-                                "/api/notifications/test-email"
+                                "/api/notifications/test-email",
+                                "/api/gcp-test/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
