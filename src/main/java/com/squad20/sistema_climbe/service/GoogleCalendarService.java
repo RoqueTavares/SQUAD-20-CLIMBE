@@ -34,8 +34,8 @@ public class GoogleCalendarService {
         return events.getItems();
     }
 
-    public Event createEvent(String accessTokenStr, String summary, String description, LocalDateTime start, LocalDateTime end) throws GeneralSecurityException, IOException {
-        Calendar service = googleApiConfig.getCalendarService(accessTokenStr);
+    public Event createEvent(String refreshTokenStr, String summary, String description, LocalDateTime start, LocalDateTime end) throws GeneralSecurityException, IOException {
+        Calendar service = googleApiConfig.getCalendarServiceFromRefreshToken(refreshTokenStr);
 
         Event event = new Event()
                 .setSummary(summary)

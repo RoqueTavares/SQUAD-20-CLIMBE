@@ -16,6 +16,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import com.squad20.sistema_climbe.service.GoogleCalendarService;
+
+import java.time.LocalDateTime;
 
 import java.util.HashSet;
 import java.util.List;
@@ -29,6 +34,7 @@ public class MeetingService {
     private final EnterpriseRepository enterpriseRepository;
     private final UserRepository userRepository;
     private final MeetingMapper meetingMapper;
+    private final GoogleCalendarService googleCalendarService;
 
     @Transactional(readOnly = true)
     public Page<MeetingDTO> findAll(Pageable pageable) {
@@ -60,8 +66,34 @@ public class MeetingService {
         meeting.setEnterprise(enterprise);
         meeting.setParticipants(participants != null ? participants : new HashSet<>());
 
-        meeting = meetingRepository.save(meeting);
-        return meetingMapper.toDTO(meeting);
+        final Meeting savedMeeting = meetingRepository.save(meeting);
+
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.getName() != null) {
+                userRepository.findByEmail(auth.getName()).ifPresent(user -> {
+                    if (user.getGoogleRefreshToken() != null) {
+                        LocalDateTime start = LocalDateTime.of(savedMeeting.getDate(), savedMeeting.getTime());
+                        LocalDateTime end = savedMeeting.getEndTime() != null 
+                                ? LocalDateTime.of(savedMeeting.getDate(), savedMeeting.getEndTime()) 
+                                : start.plusHours(1);
+                        try {
+                            googleCalendarService.createEvent(
+                                user.getGoogleRefreshToken(),
+                                savedMeeting.getTitle(),
+                                savedMeeting.getAgenda() != null ? savedMeeting.getAgenda() : "Reunião gerada pelo Sistema Climbe",
+                                start,
+                                end
+                            );
+                        } catch (Exception e) {
+                            System.err.println("Erro ao sincronizar com Google Calendar: " + e.getMessage());
+                        }
+                    }
+                });
+            }
+        } catch (Exception ignored) { }
+
+        return meetingMapper.toDTO(savedMeeting);
     }
 
     @Transactional
@@ -71,6 +103,7 @@ public class MeetingService {
         if (patch.getTitle() != null) existing.setTitle(patch.getTitle());
         if (patch.getDate() != null) existing.setDate(patch.getDate());
         if (patch.getTime() != null) existing.setTime(patch.getTime());
+        if (patch.getEndTime() != null) existing.setEndTime(patch.getEndTime());
         if (patch.getInPerson() != null) existing.setInPerson(patch.getInPerson());
         if (patch.getLocation() != null) existing.setLocation(patch.getLocation());
         if (patch.getAgenda() != null) existing.setAgenda(patch.getAgenda());
