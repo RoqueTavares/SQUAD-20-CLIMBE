@@ -46,6 +46,16 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
+    public Page<UserDTO> findPendingUsers(Pageable pageable) {
+        return userRepository.findByStatus("PENDENTE", pageable).map(userMapper::toDTO);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<UserDTO> findDeletedUsers(Pageable pageable) {
+        return userRepository.findDeletedUsers(pageable).map(userMapper::toDTO);
+    }
+
+    @Transactional(readOnly = true)
     public UserDTO findById(Long id) {
         User user = findUserOrThrow(id);
         return userMapper.toDTO(user);
