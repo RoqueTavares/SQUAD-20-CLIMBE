@@ -17,6 +17,9 @@ import com.squad20.sistema_climbe.domain.user.mapper.UserMapper;
 import com.squad20.sistema_climbe.domain.user.repository.UserRepository;
 import com.squad20.sistema_climbe.exception.ConflictException;
 import com.squad20.sistema_climbe.exception.ResourceNotFoundException;
+import com.squad20.sistema_climbe.messaging.EmailMessage;
+import com.squad20.sistema_climbe.messaging.EmailPublisher;
+import com.squad20.sistema_climbe.messaging.EmailRoutingKeys;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -38,7 +41,7 @@ public class UserService {
     private final SpreadsheetRepository spreadsheetRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final UserMapper userMapper;
-    private final com.squad20.sistema_climbe.domain.notification.service.EmailSenderService emailSenderService;
+    private final EmailPublisher emailPublisher;
 
     @Transactional(readOnly = true)
     public Page<UserDTO> findAll(Pageable pageable) {
@@ -138,7 +141,13 @@ public class UserService {
         if (user.getEmail() != null && !user.getEmail().isBlank()) {
             String subject = "Bem-vindo ao Sistema Climbe!";
             String body = "Olá " + user.getFullName() + ",\n\nSeu cadastro foi aprovado pelo administrador! Você já pode acessar o sistema utilizando seu e-mail e as credenciais configuradas.\n\nEquipe Climbe";
-            emailSenderService.sendEmail(user.getEmail(), subject, body);
+            emailPublisher.publish(
+                    EmailRoutingKeys.USER_WELCOME,
+                    EmailMessage.builder()
+                            .to(user.getEmail())
+                            .subject(subject)
+                            .body(body)
+                            .build());
         }
     }
 
