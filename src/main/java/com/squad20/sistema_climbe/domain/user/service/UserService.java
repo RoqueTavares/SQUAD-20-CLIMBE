@@ -98,6 +98,8 @@ public class UserService {
             user.setPhone(patch.getPhone());
         if (patch.getStatus() != null)
             user.setStatus(patch.getStatus());
+        if (patch.getRole() != null)
+            user.setRole(patch.getRole());
         user = userRepository.save(user);
         return userMapper.toDTO(user);
     }
