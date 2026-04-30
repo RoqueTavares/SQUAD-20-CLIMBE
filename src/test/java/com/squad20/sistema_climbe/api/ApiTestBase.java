@@ -18,9 +18,12 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import org.springframework.mock.web.MockMultipartFile;
 
 /**
  * Base para testes por API: GET lista, GET 404, e (se houver payload mínimo)
@@ -233,7 +236,26 @@ abstract class ApiTestBase {
         String body = "{\"enterpriseId\":" + enterpriseId + ",\"proposalId\":" + proposalId
                 + ",\"documentType\":\"COMMERCIAL_PROPOSAL\",\"url\":\"https://teste.com/commercial-proposal-"
                 + System.nanoTime() + ".pdf\"}";
-        return createResource("/api/documents", body);
+        return createDocumentMultipart(body);
+    }
+
+    /**
+     * O endpoint POST /api/documents consome multipart/form-data: a parte "data"
+     * carrega o JSON da DocumentCreateRequest e a parte "file" é opcional.
+     */
+    protected String createDocumentMultipart(String jsonBody) throws Exception {
+        MockMultipartFile dataPart = new MockMultipartFile(
+                "data", "data.json", MediaType.APPLICATION_JSON_VALUE, jsonBody.getBytes());
+
+        MvcResult result = mockMvc.perform(multipart("/api/documents").file(dataPart))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        String id = extractIdFromJson(result.getResponse().getContentAsString());
+        if (id == null) {
+            throw new AssertionError("Nao foi possivel extrair o id de /api/documents");
+        }
+        return id;
     }
 
     protected ProposalFixture createApprovedCommercialProposal() throws Exception {
@@ -330,6 +352,6 @@ abstract class ApiTestBase {
         UserFixture analyst = createUser();
         String body = "{\"enterpriseId\":" + enterpriseId + ",\"analystId\":" + analyst.id()
                 + ",\"title\":\"Documento teste " + System.nanoTime() + "\"}";
-        return createResource("/api/documents", body);
+        return createDocumentMultipart(body);
     }
 }

@@ -3,15 +3,21 @@ package com.squad20.sistema_climbe.api;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/** Testes da API /api/documents. GET lista e GET 404; POST exige enterpriseId. */
+/**
+ * Testes da API /api/documents.
+ * O POST consome multipart/form-data (parte "data" com o JSON e parte "file"
+ * opcional), por isso os testes herdados de POST/PATCH/DELETE são reescritos
+ * usando o builder multipart.
+ */
 class DocumentApiTest extends ApiTestBase {
 
     @Override
@@ -35,13 +41,42 @@ class DocumentApiTest extends ApiTestBase {
         return "{\"documentType\":\"DOC_ATUALIZADO\",\"validated\":false}";
     }
 
+    @Override
+    @Test
+    @DisplayName("POST retorna 201")
+    void postRetorna201() throws Exception {
+        MockMultipartFile data = new MockMultipartFile(
+                "data", "data.json", MediaType.APPLICATION_JSON_VALUE, getMinimalPostBody().getBytes());
+        mockMvc.perform(multipart(getBasePath()).file(data))
+                .andExpect(status().isCreated());
+    }
+
+    @Override
+    @Test
+    @DisplayName("PATCH retorna 200")
+    void patchRetorna200() throws Exception {
+        String id = createDocumentMultipart(getMinimalPostBody());
+        mockMvc.perform(patch(getBasePath() + "/" + id)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(getPatchBody()))
+                .andExpect(status().isOk());
+    }
+
+    @Override
+    @Test
+    @DisplayName("DELETE retorna 204")
+    void deleteRetorna204() throws Exception {
+        String id = createDocumentMultipart(getMinimalPostBody());
+        mockMvc.perform(delete(getBasePath() + "/" + id)).andExpect(status().isNoContent());
+    }
+
     @Test
     @DisplayName("PATCH sem analystId preserva analista atual")
     void patchSemAnalystIdPreservaAnalistaAtual() throws Exception {
         String enterpriseId = createEnterprise();
         UserFixture analyst = createUser();
 
-        String documentId = createResource(getBasePath(),
+        String documentId = createDocumentMultipart(
                 "{\"enterpriseId\":" + enterpriseId + ",\"documentType\":\"RG\",\"analystId\":" + analyst.id() + "}");
 
         mockMvc.perform(patch(getBasePath() + "/" + documentId)
@@ -58,7 +93,7 @@ class DocumentApiTest extends ApiTestBase {
         String enterpriseId = createEnterprise();
         UserFixture analyst = createUser();
 
-        String documentId = createResource(getBasePath(),
+        String documentId = createDocumentMultipart(
                 "{\"enterpriseId\":" + enterpriseId + ",\"documentType\":\"RG\",\"url\":\"https://teste.com/a.pdf\",\"analystId\":"
                         + analyst.id() + "}");
 
@@ -78,10 +113,7 @@ class DocumentApiTest extends ApiTestBase {
     @DisplayName("GET por empresa retorna documentos criados")
     void getByEnterpriseReturnsCreatedDocuments() throws Exception {
         String enterpriseId = createEnterprise();
-        mockMvc.perform(post(getBasePath())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"enterpriseId\":" + enterpriseId + ",\"documentType\":\"RG\"}"))
-                .andExpect(status().isCreated());
+        createDocumentMultipart("{\"enterpriseId\":" + enterpriseId + ",\"documentType\":\"RG\"}");
 
         mockMvc.perform(get(getBasePath() + "/enterprise/" + enterpriseId))
                 .andExpect(status().isOk())
@@ -93,7 +125,8 @@ class DocumentApiTest extends ApiTestBase {
     void getByAnalystReturnsCreatedDocuments() throws Exception {
         String enterpriseId = createEnterprise();
         UserFixture user = createUser();
-        createResource(getBasePath(), "{\"enterpriseId\":" + enterpriseId + ",\"documentType\":\"CPF\",\"analystId\":" + user.id() + "}");
+        createDocumentMultipart(
+                "{\"enterpriseId\":" + enterpriseId + ",\"documentType\":\"CPF\",\"analystId\":" + user.id() + "}");
 
         mockMvc.perform(get(getBasePath() + "/analyst/" + user.id()))
                 .andExpect(status().isOk())

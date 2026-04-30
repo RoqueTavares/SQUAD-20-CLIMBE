@@ -153,7 +153,7 @@ class ProposalApiTest extends ApiTestBase {
         mockMvc.perform(get("/api/notifications/user/" + complianceUser.id()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].type").value("CONTRACT_CREATION_REQUIRED"))
-                .andExpect(jsonPath("$[0].message").value(containsString("Proposal " + proposal.id())));
+                .andExpect(jsonPath("$[0].message").value(containsString("Proposta " + proposal.id())));
     }
 
     @Test
@@ -191,7 +191,7 @@ class ProposalApiTest extends ApiTestBase {
         mockMvc.perform(get("/api/notifications/user/" + analyst.id()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].type").value("RESPONSIBLE_ANALYST_ASSIGNED"))
-                .andExpect(jsonPath("$[0].message").value(containsString("proposal " + proposal.id())));
+                .andExpect(jsonPath("$[0].message").value(containsString("proposta " + proposal.id())));
     }
 
     @Test
