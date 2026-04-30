@@ -9,6 +9,9 @@ import com.squad20.sistema_climbe.domain.notification.repository.NotificationRep
 import com.squad20.sistema_climbe.domain.user.entity.User;
 import com.squad20.sistema_climbe.domain.user.repository.UserRepository;
 import com.squad20.sistema_climbe.exception.ResourceNotFoundException;
+import com.squad20.sistema_climbe.messaging.EmailMessage;
+import com.squad20.sistema_climbe.messaging.EmailPublisher;
+import com.squad20.sistema_climbe.messaging.EmailRoutingKeys;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,7 +29,7 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
     private final NotificationMapper notificationMapper;
-    private final EmailSenderService emailSenderService;
+    private final EmailPublisher emailPublisher;
     private final SimpMessagingTemplate messagingTemplate;
 
     @Transactional(readOnly = true)
@@ -62,9 +65,14 @@ public class NotificationService {
 
         notification = notificationRepository.save(notification);
 
-        
         String subject = "Nova Notificação: Sistema Climbe";
-        emailSenderService.sendEmail(user.getEmail(), subject, notification.getMessage());
+        emailPublisher.publish(
+                EmailRoutingKeys.NOTIFICATION_CREATED,
+                EmailMessage.builder()
+                        .to(user.getEmail())
+                        .subject(subject)
+                        .body(notification.getMessage())
+                        .build());
 
         NotificationDTO notificationDTO = notificationMapper.toDTO(notification);
 

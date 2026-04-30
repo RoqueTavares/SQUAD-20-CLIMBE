@@ -4,9 +4,11 @@ import com.squad20.sistema_climbe.domain.contract.repository.ContractRepository;
 import com.squad20.sistema_climbe.domain.enterprise.entity.Address;
 import com.squad20.sistema_climbe.domain.enterprise.entity.Enterprise;
 import com.squad20.sistema_climbe.domain.enterprise.repository.EnterpriseRepository;
-import com.squad20.sistema_climbe.domain.notification.service.EmailSenderService;
 import com.squad20.sistema_climbe.domain.notification.dto.NotificationCreateRequest;
 import com.squad20.sistema_climbe.domain.notification.service.NotificationService;
+import com.squad20.sistema_climbe.messaging.EmailMessage;
+import com.squad20.sistema_climbe.messaging.EmailPublisher;
+import com.squad20.sistema_climbe.messaging.EmailRoutingKeys;
 import com.squad20.sistema_climbe.domain.proposal.dto.ProposalCreateRequest;
 import com.squad20.sistema_climbe.domain.proposal.dto.ProposalDTO;
 import com.squad20.sistema_climbe.domain.proposal.dto.ProposalPatchRequest;
@@ -48,7 +50,7 @@ public class ProposalService {
     private final ReportRepository reportRepository;
     private final SpreadsheetRepository spreadsheetRepository;
     private final NotificationService notificationService;
-    private final EmailSenderService emailSenderService;
+    private final EmailPublisher emailPublisher;
     private final ProposalMapper proposalMapper;
 
     @Transactional(readOnly = true)
@@ -300,7 +302,13 @@ public class ProposalService {
             String body = String.format("Olá %s,\n\nTemos o prazer de informar que sua proposta comercial '%s' foi APROVADA com sucesso e avançará para as próximas etapas de criação de contrato.\n\nEquipe Climbe",
                     proposal.getEnterprise().getTradeName() != null ? proposal.getEnterprise().getTradeName() : proposal.getEnterprise().getLegalName(),
                     proposal.getId());
-            emailSenderService.sendEmail(proposal.getEnterprise().getEmail(), subject, body);
+            emailPublisher.publish(
+                    EmailRoutingKeys.PROPOSAL_APPROVED,
+                    EmailMessage.builder()
+                            .to(proposal.getEnterprise().getEmail())
+                            .subject(subject)
+                            .body(body)
+                            .build());
         }
     }
 
