@@ -4,11 +4,14 @@ package com.squad20.sistema_climbe.controller;
 import com.squad20.sistema_climbe.dto.AuthenticationRequest;
 import com.squad20.sistema_climbe.dto.AuthenticationResponse;
 import com.squad20.sistema_climbe.dto.RegisterRequest;
+import com.squad20.sistema_climbe.dto.RequestAccessRequest;
+import com.squad20.sistema_climbe.domain.user.dto.UserDTO;
 import com.squad20.sistema_climbe.service.AuthenticationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -58,7 +61,7 @@ public class AuthenticationController {
                 .secure(false)
                 .path("/")
                 .maxAge(30 * 60) // 30 minutes
-                .sameSite("Strict")
+                .sameSite("Lax")
                 .build();
 
         return ResponseEntity.ok()
@@ -74,13 +77,30 @@ public class AuthenticationController {
                 .build();
     }
 
+    @Operation(summary = "Solicitar acesso", description = "Solicita aprovação de acesso para um usuário pendente")
+    @PostMapping("/request-access")
+    public ResponseEntity<Void> requestAccess(@Valid @RequestBody RequestAccessRequest request) {
+        service.requestAccess(request.getEmail());
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "Obter usuário logado", description = "Retorna os dados do usuário autenticado na sessão")
+    @GetMapping("/me")
+    public ResponseEntity<UserDTO> getMe() {
+        UserDTO user = service.getCurrentUser();
+        if (user == null) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED).build();
+        }
+        return ResponseEntity.ok(user);
+    }
+
     private org.springframework.http.HttpHeaders generateAuthCookies(String accessToken, String refreshToken) {
         org.springframework.http.ResponseCookie accessCookie = org.springframework.http.ResponseCookie.from("accessToken", accessToken)
                 .httpOnly(true)
                 .secure(false)
                 .path("/")
                 .maxAge(30 * 60) // 30 minutes
-                .sameSite("Strict")
+                .sameSite("Lax")
                 .build();
 
         org.springframework.http.ResponseCookie refreshCookie = org.springframework.http.ResponseCookie.from("refreshToken", refreshToken)
@@ -88,7 +108,7 @@ public class AuthenticationController {
                 .secure(false)
                 .path("/api/auth/refresh")
                 .maxAge(7 * 24 * 60 * 60)
-                .sameSite("Strict")
+                .sameSite("Lax")
                 .build();
 
         org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
@@ -103,7 +123,7 @@ public class AuthenticationController {
                 .secure(false)
                 .path("/")
                 .maxAge(0) 
-                .sameSite("Strict")
+                .sameSite("Lax")
                 .build();
 
         org.springframework.http.ResponseCookie refreshCookie = org.springframework.http.ResponseCookie.from("refreshToken", "")
@@ -111,7 +131,7 @@ public class AuthenticationController {
                 .secure(false)
                 .path("/api/auth/refresh")
                 .maxAge(0) 
-                .sameSite("Strict")
+                .sameSite("Lax")
                 .build();
 
         org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
