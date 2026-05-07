@@ -40,7 +40,8 @@ public class SecurityConfig {
                                 "/swagger-ui.html",
                                 "/login/oauth2/**",
                                 "/api/notifications/test-email",
-                                "/api/gcp-test/**"
+                                "/api/gcp-test/**",
+                                "/error"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
@@ -49,6 +50,9 @@ public class SecurityConfig {
                                 .authorizationRequestResolver(customAuthorizationRequestResolver(clientRegistrationRepository))
                         )
                         .successHandler(customOAuth2SuccessHandler)
+                )
+                .exceptionHandling(e -> e
+                        .authenticationEntryPoint(new org.springframework.security.web.authentication.HttpStatusEntryPoint(org.springframework.http.HttpStatus.UNAUTHORIZED))
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider)

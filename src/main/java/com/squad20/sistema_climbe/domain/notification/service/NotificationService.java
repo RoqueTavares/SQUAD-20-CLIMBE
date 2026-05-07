@@ -62,9 +62,12 @@ public class NotificationService {
 
         notification = notificationRepository.save(notification);
 
-        
-        String subject = "Nova Notificação: Sistema Climbe";
-        emailSenderService.sendEmail(user.getEmail(), subject, notification.getMessage());
+        try {
+            String subject = "Nova Notificação: Sistema Climbe";
+            emailSenderService.sendEmail(user.getEmail(), subject, notification.getMessage());
+        } catch (Exception e) {
+            System.err.println("Erro ao enviar e-mail de notificação: " + e.getMessage());
+        }
 
         NotificationDTO notificationDTO = notificationMapper.toDTO(notification);
 
