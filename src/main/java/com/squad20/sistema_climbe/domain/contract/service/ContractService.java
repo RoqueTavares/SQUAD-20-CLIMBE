@@ -105,7 +105,10 @@ public class ContractService {
     }
 
     private void validateProposalCanCreateContract(Proposal proposal) {
-        ProposalStatus status = normalizeProposalStatus(proposal.getStatus());
+        ProposalStatus status = proposal.getStatus();
+        if (status == null) {
+            throw new BadRequestException("A proposta vinculada ao contrato não possui um status válido.");
+        }
         if (status != ProposalStatus.COMMERCIAL_PROPOSAL_APPROVED) {
             throw new BadRequestException(
                     "O contrato só pode ser criado quando a proposta comercial estiver aprovada.");
@@ -120,18 +123,6 @@ public class ContractService {
 
     private boolean isDigitallySigned(String status) {
         return status != null && DIGITALLY_SIGNED_STATUS.equals(status.trim().toUpperCase(Locale.ROOT));
-    }
-
-    private ProposalStatus normalizeProposalStatus(String status) {
-        if (status == null || status.isBlank()) {
-            throw new BadRequestException("A proposta vinculada ao contrato não possui um status válido.");
-        }
-
-        try {
-            return ProposalStatus.valueOf(status.trim().toUpperCase(Locale.ROOT));
-        } catch (IllegalArgumentException ex) {
-            throw new BadRequestException("Status da proposta não é compatível com o fluxo de contrato: " + status);
-        }
     }
 
     private Contract findContractOrThrow(Long id) {

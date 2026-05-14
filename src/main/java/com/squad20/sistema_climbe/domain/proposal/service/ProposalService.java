@@ -33,7 +33,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -89,7 +88,7 @@ public class ProposalService {
         proposal.setId(null);
         proposal.setEnterprise(enterprise);
         proposal.setUser(user);
-        proposal.setStatus(ProposalStatus.RECEIVED.name());
+        proposal.setStatus(ProposalStatus.RECEIVED);
 
         proposal = proposalRepository.save(proposal);
         return proposalMapper.toDTO(proposal);
@@ -126,7 +125,7 @@ public class ProposalService {
     @Transactional
     public void markCommercialProposalSubmitted(Long proposalId) {
         Proposal proposal = findProposalOrThrow(proposalId);
-        ProposalStatus currentStatus = normalizeProposalStatus(proposal.getStatus());
+        ProposalStatus currentStatus = currentStatusOrDefault(proposal);
 
         if (currentStatus == ProposalStatus.COMMERCIAL_PROPOSAL) {
             return;
@@ -139,14 +138,14 @@ public class ProposalService {
         }
 
         proposal.setResponsibleAnalyst(null);
-        proposal.setStatus(ProposalStatus.COMMERCIAL_PROPOSAL.name());
+        proposal.setStatus(ProposalStatus.COMMERCIAL_PROPOSAL);
         proposalRepository.save(proposal);
     }
 
     @Transactional
     public void markReadyForNextStage(Long proposalId) {
         Proposal proposal = findProposalOrThrow(proposalId);
-        ProposalStatus currentStatus = normalizeProposalStatus(proposal.getStatus());
+        ProposalStatus currentStatus = currentStatusOrDefault(proposal);
 
         if (currentStatus == ProposalStatus.READY_FOR_NEXT_STAGE) {
             return;
@@ -157,7 +156,7 @@ public class ProposalService {
                     "A proposta só pode avançar para a próxima etapa após a aprovação da proposta comercial.");
         }
 
-        proposal.setStatus(ProposalStatus.READY_FOR_NEXT_STAGE.name());
+        proposal.setStatus(ProposalStatus.READY_FOR_NEXT_STAGE);
         proposalRepository.save(proposal);
     }
 
@@ -180,10 +179,10 @@ public class ProposalService {
     }
 
     private void applyWorkflowStatus(Proposal proposal, ProposalStatus newStatus) {
-        ProposalStatus currentStatus = normalizeProposalStatus(proposal.getStatus());
+        ProposalStatus currentStatus = currentStatusOrDefault(proposal);
 
         if (currentStatus == newStatus) {
-            proposal.setStatus(newStatus.name());
+            proposal.setStatus(newStatus);
             return;
         }
 
@@ -214,11 +213,11 @@ public class ProposalService {
             proposal.setResponsibleAnalyst(null);
         }
 
-        proposal.setStatus(newStatus.name());
+        proposal.setStatus(newStatus);
     }
 
     private void assignResponsibleAnalyst(Proposal proposal, Long analystId) {
-        ProposalStatus currentStatus = normalizeProposalStatus(proposal.getStatus());
+        ProposalStatus currentStatus = currentStatusOrDefault(proposal);
         if (currentStatus != ProposalStatus.COMMERCIAL_PROPOSAL_APPROVED
                 && currentStatus != ProposalStatus.READY_FOR_NEXT_STAGE) {
             throw new BadRequestException(
@@ -240,16 +239,8 @@ public class ProposalService {
         notifyResponsibleAnalyst(proposal, analyst);
     }
 
-    private ProposalStatus normalizeProposalStatus(String status) {
-        if (status == null || status.isBlank()) {
-            return ProposalStatus.RECEIVED;
-        }
-
-        try {
-            return ProposalStatus.valueOf(status.trim().toUpperCase(Locale.ROOT));
-        } catch (IllegalArgumentException ex) {
-            throw new BadRequestException("Status atual da proposta não é compatível com o fluxo configurado: " + status);
-        }
+    private ProposalStatus currentStatusOrDefault(Proposal proposal) {
+        return proposal.getStatus() != null ? proposal.getStatus() : ProposalStatus.RECEIVED;
     }
 
     private void validateTriageGate(Enterprise enterprise) {

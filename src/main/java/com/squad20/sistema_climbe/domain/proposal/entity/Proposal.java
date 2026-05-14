@@ -35,6 +35,7 @@ public class Proposal extends BaseEntity {
     @JoinColumn(name = "analista_responsavel_id")
     private User responsibleAnalyst;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 50)
-    private String status;
+    private ProposalStatus status;
 }

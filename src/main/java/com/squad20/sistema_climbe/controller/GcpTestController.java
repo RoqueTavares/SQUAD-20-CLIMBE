@@ -20,21 +20,16 @@ public class GcpTestController {
 
     @Operation(summary = "Fazer um upload teste", description = "Sobe um arquivo para o seu Bucket e devolve um link temporário para certificar que funcionou.")
     @PostMapping(value = "/upload", consumes = "multipart/form-data")
-    public ResponseEntity<String> testUpload(@RequestParam("file") MultipartFile file) {
-        try {
-            // 1. Faz o upload e pega o caminho interno no GCP
-            String pathBanco = storageService.uploadPrivateFile(file, "pasta_teste");
-            
-            // 2. Transforma o caminho interno numa URL assinada de 30 minutos
-            String urlVisualizacao = storageService.generateSignedUrl(pathBanco);
-            
-            return ResponseEntity.ok(
-                "SUCESSO! Objeto criado como: " + pathBanco + 
-                "\n\nLink temporário para clicar e ver o arquivo na nuvem:\n" + urlVisualizacao
-            );
-        } catch (IOException e) {
-            e.printStackTrace();
-            return ResponseEntity.internalServerError().body("Erro ao subir para o GCP. Verifique se o JSON é válido! Erro: " + e.getMessage());
-        }
+    public ResponseEntity<String> testUpload(@RequestParam("file") MultipartFile file) throws IOException {
+        // 1. Faz o upload e pega o caminho interno no GCP
+        String pathBanco = storageService.uploadPrivateFile(file, "pasta_teste");
+        
+        // 2. Transforma o caminho interno numa URL assinada de 30 minutos
+        String urlVisualizacao = storageService.generateSignedUrl(pathBanco);
+        
+        return ResponseEntity.ok(
+            "SUCESSO! Objeto criado como: " + pathBanco + 
+            "\n\nLink temporário para clicar e ver o arquivo na nuvem:\n" + urlVisualizacao
+        );
     }
 }

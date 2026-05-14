@@ -58,7 +58,7 @@ public class DocumentController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<DocumentDTO> save(
             @RequestPart("data") @Valid DocumentCreateRequest request,
-            @RequestPart(value = "file", required = false) MultipartFile file) {
+            @RequestPart(value = "file", required = false) MultipartFile file) throws java.io.IOException {
         return ResponseEntity.status(HttpStatus.CREATED).body(documentService.saveWithFile(request, file));
     }
 
