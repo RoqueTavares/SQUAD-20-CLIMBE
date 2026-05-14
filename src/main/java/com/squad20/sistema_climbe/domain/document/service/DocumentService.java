@@ -13,6 +13,7 @@ import com.squad20.sistema_climbe.domain.proposal.repository.ProposalRepository;
 import com.squad20.sistema_climbe.domain.proposal.service.ProposalService;
 import com.squad20.sistema_climbe.domain.user.entity.User;
 import com.squad20.sistema_climbe.domain.user.repository.UserRepository;
+import com.google.cloud.storage.StorageException;
 import com.squad20.sistema_climbe.exception.BadRequestException;
 import com.squad20.sistema_climbe.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -101,8 +102,13 @@ public class DocumentService {
     @Transactional
     public DocumentDTO saveWithFile(DocumentCreateRequest request, MultipartFile file) throws IOException {
         if (file != null && !file.isEmpty()) {
-            String internalPath = storageService.uploadPrivateFile(file, "documentos_empresa_" + request.getEnterpriseId());
-            request.setUrl(internalPath); // Salva o caminho interno no GCP
+            try {
+                String internalPath = storageService.uploadPrivateFile(file, "documentos_empresa_" + request.getEnterpriseId());
+                request.setUrl(internalPath); // Salva o caminho interno no GCP
+            } catch (StorageException e) {
+                log.error("Falha ao enviar documento para o Google Cloud Storage: {}", e.getMessage(), e);
+                throw new BadRequestException("Falha ao enviar arquivo para o Google Cloud Storage. Verifique se GCP_BUCKET_NAME existe e se a service account tem permissao no bucket.");
+            }
         }
         return save(request);
     }
