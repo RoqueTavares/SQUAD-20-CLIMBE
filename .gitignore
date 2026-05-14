@@ -67,3 +67,6 @@ replay_pid*
 application.properties
 .env
 gcp-credentials.json
+
+# Documentação interna de trabalho (não versionada)
+docs/
