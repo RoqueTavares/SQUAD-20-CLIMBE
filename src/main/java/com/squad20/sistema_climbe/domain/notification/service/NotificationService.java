@@ -65,6 +65,7 @@ public class NotificationService {
 
         notification = notificationRepository.save(notification);
 
+
         String subject = "Nova Notificação: Sistema Climbe";
         emailPublisher.publish(
                 EmailRoutingKeys.NOTIFICATION_CREATED,
@@ -73,6 +74,7 @@ public class NotificationService {
                         .subject(subject)
                         .body(notification.getMessage())
                         .build());
+
 
         NotificationDTO notificationDTO = notificationMapper.toDTO(notification);
 

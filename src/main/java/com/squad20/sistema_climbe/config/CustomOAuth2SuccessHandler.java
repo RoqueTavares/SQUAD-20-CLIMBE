@@ -39,20 +39,31 @@ public class CustomOAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHa
         String email = oAuth2User.getAttribute("email");
         String name = oAuth2User.getAttribute("name");
 
+        System.out.println("OAuth2 Login Sucesso: " + email);
+
         User user = userRepository.findByEmail(email).orElseGet(() -> {
+            System.out.println("Criando novo usuário OAuth2...");
+            String numericCpf = UUID.randomUUID().toString().replaceAll("[^0-9]", "").substring(0, 11);
+
             User newUser = User.builder()
                     .fullName(name != null ? name : "User OAuth2")
                     .email(email)
-                    .cpf("OA" + UUID.randomUUID().toString().substring(0, 12)) 
+                    .cpf(numericCpf)
                     .passwordHash(passwordEncoder.encode(UUID.randomUUID().toString()))
                     .status("PENDENTE")
                     .build();
+
+            System.out.println("Salvando usuário no banco...");
             User savedUser = userRepository.save(newUser);
+            System.out.println("Usuário salvo! Notificando admins...");
             notifyAdmins(savedUser);
             return savedUser;
         });
 
-        if (authentication instanceof OAuth2AuthenticationToken oauthToken) {
+        System.out.println("Processando Tokens...");
+
+        if (authentication instanceof OAuth2AuthenticationToken) {
+            OAuth2AuthenticationToken oauthToken = (OAuth2AuthenticationToken) authentication;
             OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient(oauthToken.getAuthorizedClientRegistrationId(), oauthToken.getName());
             if (client != null && client.getRefreshToken() != null) {
                 user.setGoogleRefreshToken(client.getRefreshToken().getTokenValue());
@@ -61,13 +72,13 @@ public class CustomOAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHa
         }
 
         String jwtToken = jwtService.generateToken(user);
-        
+
         refreshTokenService.deleteByUserId(user.getId());
         var refreshToken = refreshTokenService.createRefreshToken(user.getId());
 
         ResponseCookie accessCookie = ResponseCookie.from("accessToken", jwtToken)
                 .httpOnly(true)
-                .secure(false) 
+                .secure(false)
                 .path("/")
                 .maxAge(24 * 60 * 60)
                 .sameSite("Lax")
@@ -84,7 +95,7 @@ public class CustomOAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHa
         response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
         response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
 
-        getRedirectStrategy().sendRedirect(request, response, "http://localhost:5173/dashboard"); 
+        getRedirectStrategy().sendRedirect(request, response, "http://localhost:5173/dashboard");
     }
 
     private void notifyAdmins(User newUser) {

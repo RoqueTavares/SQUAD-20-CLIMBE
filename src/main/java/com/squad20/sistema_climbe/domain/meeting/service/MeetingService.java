@@ -78,14 +78,29 @@ public class MeetingService {
                         LocalDateTime end = savedMeeting.getEndTime() != null 
                                 ? LocalDateTime.of(savedMeeting.getDate(), savedMeeting.getEndTime()) 
                                 : start.plusHours(1);
+                        List<String> attendeeEmails = savedMeeting.getParticipants().stream()
+                                .map(com.squad20.sistema_climbe.domain.user.entity.User::getEmail)
+                                .filter(email -> email != null && !email.isEmpty())
+                                .toList();
                         try {
-                            googleCalendarService.createEvent(
+                            com.google.api.services.calendar.model.Event createdEvent = googleCalendarService.createEvent(
                                 user.getGoogleRefreshToken(),
                                 savedMeeting.getTitle(),
                                 savedMeeting.getAgenda() != null ? savedMeeting.getAgenda() : "Reunião gerada pelo Sistema Climbe",
                                 start,
-                                end
+                                end,
+                                attendeeEmails
                             );
+                            
+                            if (createdEvent != null && createdEvent.getHangoutLink() != null) {
+                                String meetLinkText = "Link do Meet: " + createdEvent.getHangoutLink();
+                                if (savedMeeting.getLocation() == null || savedMeeting.getLocation().trim().isEmpty()) {
+                                    savedMeeting.setLocation(meetLinkText);
+                                } else {
+                                    savedMeeting.setLocation(savedMeeting.getLocation() + " | " + meetLinkText);
+                                }
+                                meetingRepository.save(savedMeeting);
+                            }
                         } catch (Exception e) {
                             System.err.println("Erro ao sincronizar com Google Calendar: " + e.getMessage());
                         }

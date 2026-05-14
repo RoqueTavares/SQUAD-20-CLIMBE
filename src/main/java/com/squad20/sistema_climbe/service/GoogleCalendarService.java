@@ -2,7 +2,11 @@ package com.squad20.sistema_climbe.service;
 
 import com.google.api.client.util.DateTime;
 import com.google.api.services.calendar.Calendar;
+import com.google.api.services.calendar.model.ConferenceData;
+import com.google.api.services.calendar.model.ConferenceSolutionKey;
+import com.google.api.services.calendar.model.CreateConferenceRequest;
 import com.google.api.services.calendar.model.Event;
+import com.google.api.services.calendar.model.EventAttendee;
 import com.google.api.services.calendar.model.EventDateTime;
 import com.google.api.services.calendar.model.Events;
 import com.squad20.sistema_climbe.config.GoogleApiConfig;
@@ -34,7 +38,7 @@ public class GoogleCalendarService {
         return events.getItems();
     }
 
-    public Event createEvent(String refreshTokenStr, String summary, String description, LocalDateTime start, LocalDateTime end) throws GeneralSecurityException, IOException {
+    public Event createEvent(String refreshTokenStr, String summary, String description, LocalDateTime start, LocalDateTime end, List<String> attendeeEmails) throws GeneralSecurityException, IOException {
         Calendar service = googleApiConfig.getCalendarServiceFromRefreshToken(refreshTokenStr);
 
         Event event = new Event()
@@ -49,6 +53,24 @@ public class GoogleCalendarService {
         EventDateTime endEventDateTime = new EventDateTime().setDateTime(endDateTime).setTimeZone(ZoneId.systemDefault().getId());
         event.setEnd(endEventDateTime);
 
-        return service.events().insert("primary", event).execute();
+        if (attendeeEmails != null && !attendeeEmails.isEmpty()) {
+            List<EventAttendee> attendees = new java.util.ArrayList<>();
+            for (String email : attendeeEmails) {
+                attendees.add(new EventAttendee().setEmail(email));
+            }
+            event.setAttendees(attendees);
+        }
+
+        ConferenceSolutionKey conferenceSolutionKey = new ConferenceSolutionKey().setType("hangoutsMeet");
+        CreateConferenceRequest createConferenceRequest = new CreateConferenceRequest()
+                .setRequestId(java.util.UUID.randomUUID().toString())
+                .setConferenceSolutionKey(conferenceSolutionKey);
+        ConferenceData conferenceData = new ConferenceData().setCreateRequest(createConferenceRequest);
+        event.setConferenceData(conferenceData);
+
+        return service.events().insert("primary", event)
+                .setConferenceDataVersion(1)
+                .setSendUpdates("all")
+                .execute();
     }
 }

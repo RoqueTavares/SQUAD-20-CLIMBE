@@ -100,9 +100,9 @@ public class User extends BaseEntity implements UserDetails {
     }
 
     // Bloqueia autenticação JWT para usuários soft-deletados.
-    // Spring Security chama isEnabled() antes de validar o token.
+    // Bloqueia autenticação JWT para usuários soft-deletados ou pendentes.
     @Override
     public boolean isEnabled() {
-        return !isDeleted();
+        return !isDeleted() && "ATIVO".equals(this.status);
     }
 }

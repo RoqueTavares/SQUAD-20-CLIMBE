@@ -41,4 +41,22 @@ public class ApplicationConfig {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
+
+    @Bean
+    public org.springframework.boot.CommandLineRunner initDataSeeder(UserRepository repository, PasswordEncoder passwordEncoder) {
+        return args -> {
+            if (repository.findByEmail("admin@climbe.com.br").isEmpty()) {
+                com.squad20.sistema_climbe.domain.user.entity.User admin = com.squad20.sistema_climbe.domain.user.entity.User.builder()
+                        .fullName("Administrador CEO")
+                        .email("admin@climbe.com.br")
+                        .cpf("00000000000")
+                        .passwordHash(passwordEncoder.encode("admin123"))
+                        .status("ATIVO")
+                        .role(com.squad20.sistema_climbe.domain.user.entity.Role.CEO)
+                        .build();
+                repository.save(admin);
+                System.out.println("====== SEED: Usuário CEO criado com sucesso (admin@climbe.com.br / admin123) ======");
+            }
+        };
+    }
 }

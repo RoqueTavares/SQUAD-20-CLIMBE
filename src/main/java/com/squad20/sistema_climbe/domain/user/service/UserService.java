@@ -49,6 +49,16 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
+    public Page<UserDTO> findPendingUsers(Pageable pageable) {
+        return userRepository.findByStatus("PENDENTE", pageable).map(userMapper::toDTO);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<UserDTO> findDeletedUsers(Pageable pageable) {
+        return userRepository.findDeletedUsers(pageable).map(userMapper::toDTO);
+    }
+
+    @Transactional(readOnly = true)
     public UserDTO findById(Long id) {
         User user = findUserOrThrow(id);
         return userMapper.toDTO(user);
@@ -91,6 +101,8 @@ public class UserService {
             user.setPhone(patch.getPhone());
         if (patch.getStatus() != null)
             user.setStatus(patch.getStatus());
+        if (patch.getRole() != null)
+            user.setRole(patch.getRole());
         user = userRepository.save(user);
         return userMapper.toDTO(user);
     }

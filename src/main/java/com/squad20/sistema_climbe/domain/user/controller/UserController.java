@@ -31,6 +31,20 @@ public class UserController {
         return ResponseEntity.ok(userService.findAll(pageable));
     }
 
+    @Operation(summary = "Listar usuários pendentes", description = "Retorna usuários aguardando aprovação")
+    @PreAuthorize("hasRole('CEO')")
+    @GetMapping("/pending")
+    public ResponseEntity<Page<UserDTO>> findPendingUsers(Pageable pageable) {
+        return ResponseEntity.ok(userService.findPendingUsers(pageable));
+    }
+
+    @Operation(summary = "Listar usuários desativados", description = "Retorna usuários que sofreram soft-delete")
+    @PreAuthorize("hasRole('CEO')")
+    @GetMapping("/deleted")
+    public ResponseEntity<Page<UserDTO>> findDeletedUsers(Pageable pageable) {
+        return ResponseEntity.ok(userService.findDeletedUsers(pageable));
+    }
+
     @Operation(summary = "Buscar por ID", description = "Retorna um usuário pelo identificador")
     @GetMapping("/{id}")
     public ResponseEntity<UserDTO> findById(

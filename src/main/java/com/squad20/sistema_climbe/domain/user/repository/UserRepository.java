@@ -15,4 +15,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByCpf(String cpf);
 
     List<User> findByRole(Role role);
+
+    org.springframework.data.domain.Page<User> findByStatus(String status, org.springframework.data.domain.Pageable pageable);
+
+    @org.springframework.data.jpa.repository.Query(
+        value = "SELECT * FROM usuarios WHERE deleted_at IS NOT NULL",
+        countQuery = "SELECT count(*) FROM usuarios WHERE deleted_at IS NOT NULL",
+        nativeQuery = true
+    )
+    org.springframework.data.domain.Page<User> findDeletedUsers(org.springframework.data.domain.Pageable pageable);
 }
