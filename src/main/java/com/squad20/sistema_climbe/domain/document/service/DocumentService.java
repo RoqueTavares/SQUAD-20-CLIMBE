@@ -3,9 +3,9 @@ package com.squad20.sistema_climbe.domain.document.service;
 import com.squad20.sistema_climbe.domain.document.dto.DocumentCreateRequest;
 import com.squad20.sistema_climbe.domain.document.dto.DocumentDTO;
 import com.squad20.sistema_climbe.domain.document.dto.DocumentPatchRequest;
-import com.squad20.sistema_climbe.domain.document.entity.Document;
+import com.squad20.sistema_climbe.domain.document.entity.*;
 import com.squad20.sistema_climbe.domain.document.mapper.DocumentMapper;
-import com.squad20.sistema_climbe.domain.document.repository.DocumentRepository;
+import com.squad20.sistema_climbe.domain.document.repository.*;
 import com.squad20.sistema_climbe.domain.enterprise.entity.Enterprise;
 import com.squad20.sistema_climbe.domain.enterprise.repository.EnterpriseRepository;
 import com.squad20.sistema_climbe.domain.proposal.entity.Proposal;
@@ -16,6 +16,7 @@ import com.squad20.sistema_climbe.domain.user.repository.UserRepository;
 import com.squad20.sistema_climbe.exception.BadRequestException;
 import com.squad20.sistema_climbe.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -28,6 +29,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class DocumentService {
@@ -41,6 +43,7 @@ public class DocumentService {
     private final ProposalService proposalService;
     private final DocumentMapper documentMapper;
     private final GoogleCloudStorageService storageService;
+    private final DocumentRequirementRepository documentRequirementRepository;
 
     @Transactional(readOnly = true)
     public Page<DocumentDTO> findAll(Pageable pageable) {
@@ -85,6 +88,11 @@ public class DocumentService {
 
         if (isCommercialProposalDocument(document.getDocumentType()) && proposal != null) {
             proposalService.markCommercialProposalSubmitted(proposal.getId());
+        }
+
+        // Tenta vincular automaticamente ao checklist (Requisito Documental)
+        if (proposal != null && request.getDocumentType() != null) {
+            linkToRequirementIfPossible(proposal.getId(), document, request.getDocumentType());
         }
 
         return documentMapper.toDTO(document);
@@ -198,5 +206,33 @@ public class DocumentService {
     private Document findDocumentOrThrow(Long id) {
         return documentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Documento nao encontrado com id: " + id));
+    }
+
+    /**
+     * Tenta localizar um requisito documental (checklist) pendente que corresponda ao tipo
+     * do documento enviado. Se encontrar, vincula o documento e atualiza o status para SUBMITTED.
+     */
+    private void linkToRequirementIfPossible(Long proposalId, Document document, String documentTypeName) {
+        try {
+            DocumentType type = DocumentType.valueOf(documentTypeName.trim().toUpperCase(Locale.ROOT));
+            documentRequirementRepository.findByProposal_IdAndDocumentType(proposalId, type)
+                    .ifPresent(requirement -> {
+                        // Só vincula se estiver PENDING ou se foi reprovado anteriormente (re-submissão)
+                        if (requirement.getStatus() == DocumentRequirementStatus.PENDING || 
+                            requirement.getStatus() == DocumentRequirementStatus.NON_COMPLIANT) {
+                            
+                            requirement.setDocument(document);
+                            requirement.setStatus(DocumentRequirementStatus.SUBMITTED);
+                            requirement.setRejectionReason(null); // Limpa motivo anterior se houver
+                            documentRequirementRepository.save(requirement);
+                            
+                            log.info("Vínculo automático: Documento {} vinculado ao requisito {} da proposta {}", 
+                                    document.getId(), requirement.getId(), proposalId);
+                        }
+                    });
+        } catch (IllegalArgumentException e) {
+            // Se o tipo do documento não for um dos Enums de Requisito (ex: Proposta Comercial), ignora o vínculo automático
+            log.debug("Tipo de documento {} não mapeado para vínculo automático de requisitos.", documentTypeName);
+        }
     }
 }
