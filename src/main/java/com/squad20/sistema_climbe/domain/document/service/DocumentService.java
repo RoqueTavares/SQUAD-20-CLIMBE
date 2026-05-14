@@ -99,14 +99,10 @@ public class DocumentService {
     }
 
     @Transactional
-    public DocumentDTO saveWithFile(DocumentCreateRequest request, MultipartFile file) {
+    public DocumentDTO saveWithFile(DocumentCreateRequest request, MultipartFile file) throws IOException {
         if (file != null && !file.isEmpty()) {
-            try {
-                String internalPath = storageService.uploadPrivateFile(file, "documentos_empresa_" + request.getEnterpriseId());
-                request.setUrl(internalPath); // Salva o caminho interno no GCP
-            } catch (IOException e) {
-                throw new com.squad20.sistema_climbe.exception.BadRequestException("Erro ao fazer upload do arquivo para o GCP: " + e.getMessage());
-            }
+            String internalPath = storageService.uploadPrivateFile(file, "documentos_empresa_" + request.getEnterpriseId());
+            request.setUrl(internalPath); // Salva o caminho interno no GCP
         }
         return save(request);
     }
