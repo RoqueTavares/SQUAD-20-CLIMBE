@@ -12,6 +12,7 @@ import com.squad20.sistema_climbe.domain.user.entity.User;
 import com.squad20.sistema_climbe.domain.user.repository.UserRepository;
 import com.squad20.sistema_climbe.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class MeetingService {
@@ -102,7 +104,8 @@ public class MeetingService {
                                 meetingRepository.save(savedMeeting);
                             }
                         } catch (Exception e) {
-                            System.err.println("Erro ao sincronizar com Google Calendar: " + e.getMessage());
+                            log.error("Falha ao sincronizar reunião {} com Google Calendar (userId={})",
+                                    savedMeeting.getId(), user.getId(), e);
                         }
                     }
                 });
