@@ -1,0 +1,35 @@
+name: Code Quality & Security
+
+on:
+  push:
+    branches: [ "main", "develop"]
+  pull_request:
+    branches: [ "main", "develop" ]
+  schedule:
+    - cron: '0 0 * * 0' # Roda todo domingo à meia-noite
+
+jobs:
+  analyze:
+    name: Analisar Código (CodeQL)
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+
+    steps:
+    - name: Checkout do código
+      uses: actions/checkout@v4
+
+    - name: Inicializar CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: 'java'
+
+    - name: Autobuild (ou use o comando do Gradle)
+      run: |
+        chmod +x ./gradlew
+        ./gradlew compileJava
+
+    - name: Executar Análise do CodeQL
+      uses: github/codeql-action/analyze@v3
