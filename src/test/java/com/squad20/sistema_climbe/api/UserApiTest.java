@@ -169,4 +169,57 @@ class UserApiTest extends ApiTestBase {
         mockMvc.perform(get("/api/proposals/" + proposal.id()))
             .andExpect(status().isNotFound());
     }
+
+    /*
+     * Os endpoints /pending e /deleted são restritos a CEO via
+     * @PreAuthorize("hasRole('CEO')"). No profile "test" (TestSecurityConfig +
+     * SecurityConfig com @Profile("!test")), @EnableMethodSecurity NÃO está
+     * ativo, então as anotações de autorização não são avaliadas. Os testes
+     * abaixo cobrem o filtro de status (caminho feliz). A validação de 403
+     * para roles não autorizadas precisa ser feita em PR separado, junto com
+     * a habilitação de method security para a suíte de testes.
+     */
+
+    @Test
+    @DisplayName("GET /api/users/pending retorna apenas usuários com status PENDENTE")
+    void pendingRetornaApenasUsuariosPendentes() throws Exception {
+        UserFixture pendente = createUserWithStatus("PENDENTE");
+        UserFixture ativo = createUserWithStatus("ATIVO");
+        UserFixture pendenteDeletado = createUserWithStatus("PENDENTE");
+        mockMvc.perform(delete(getBasePath() + "/" + pendenteDeletado.id()))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(get(getBasePath() + "/pending?size=200"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[?(@.id == " + pendente.id() + ")]").isNotEmpty())
+                .andExpect(jsonPath("$.content[?(@.id == " + ativo.id() + ")]").isEmpty())
+                .andExpect(jsonPath("$.content[?(@.id == " + pendenteDeletado.id() + ")]").isEmpty());
+    }
+
+    @Test
+    @DisplayName("GET /api/users/deleted retorna apenas usuários soft-deletados")
+    void deletedRetornaApenasUsuariosSoftDeletados() throws Exception {
+        UserFixture pendente = createUserWithStatus("PENDENTE");
+        UserFixture ativo = createUserWithStatus("ATIVO");
+        UserFixture deletado = createUserWithStatus("ATIVO");
+        mockMvc.perform(delete(getBasePath() + "/" + deletado.id()))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(get(getBasePath() + "/deleted?size=200"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[?(@.id == " + deletado.id() + ")]").isNotEmpty())
+                .andExpect(jsonPath("$.content[?(@.id == " + pendente.id() + ")]").isEmpty())
+                .andExpect(jsonPath("$.content[?(@.id == " + ativo.id() + ")]").isEmpty());
+    }
+
+    private UserFixture createUserWithStatus(String status) throws Exception {
+        long n = nextSeed();
+        String email = "user" + n + "@teste.com";
+        String cpf = generateValidCpf(n);
+        String statusField = status != null ? ",\"status\":\"" + status + "\"" : "";
+        String body = "{\"fullName\":\"Usuario Teste " + n + "\",\"cpf\":\"" + cpf
+                + "\",\"email\":\"" + email + "\"" + statusField + "}";
+        String id = createResource("/api/users", body);
+        return new UserFixture(id, email, cpf);
+    }
 }

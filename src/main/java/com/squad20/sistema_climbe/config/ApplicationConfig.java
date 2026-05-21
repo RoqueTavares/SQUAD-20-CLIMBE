@@ -4,6 +4,7 @@ import com.squad20.sistema_climbe.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -13,9 +14,16 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 @Configuration
 @RequiredArgsConstructor
 public class ApplicationConfig {
+
+    @Bean
+    public ObjectMapper objectMapper() {
+        return new ObjectMapper();
+    }
 
     private final UserRepository repository;
 
@@ -43,6 +51,7 @@ public class ApplicationConfig {
     }
 
     @Bean
+    @Profile("dev")
     public org.springframework.boot.CommandLineRunner initDataSeeder(UserRepository repository, PasswordEncoder passwordEncoder) {
         return args -> {
             if (repository.findByEmail("admin@climbe.com.br").isEmpty()) {

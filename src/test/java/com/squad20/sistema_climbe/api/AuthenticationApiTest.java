@@ -12,9 +12,12 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import jakarta.servlet.http.Cookie;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -186,6 +189,97 @@ class AuthenticationApiTest {
         mockMvc.perform(post("/api/auth/refresh")
                 .cookie(new Cookie("refreshToken", refreshToken)))
             .andExpect(status().is4xxClientError());
+    }
+
+    @Test
+    @DisplayName("GET /api/auth/me sem autenticação retorna 401")
+    void getMeSemAutenticacaoRetorna401() throws Exception {
+        mockMvc.perform(get("/api/auth/me"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("GET /api/auth/me com usuário autenticado retorna dados do usuário")
+    void getMeComUsuarioAutenticadoRetornaDados() throws Exception {
+        long n = nextAuthSeed();
+        String email = "me." + n + "@teste.com";
+
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(registerBody(n, email, "Senha123")))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/auth/me").with(user(email)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value(email));
+    }
+
+    @Test
+    @DisplayName("GET /api/auth/me com usuário inexistente no banco retorna 401")
+    void getMeComUsuarioInexistenteRetorna401() throws Exception {
+        String email = "fantasma." + nextAuthSeed() + "@teste.com";
+
+        mockMvc.perform(get("/api/auth/me").with(user(email)))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("POST /api/auth/request-access para usuário PENDENTE retorna 200")
+    void requestAccessParaUsuarioPendenteRetorna200() throws Exception {
+        long n = nextAuthSeed();
+        String email = "req.acc." + n + "@teste.com";
+
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(registerBody(n, email, "Senha123")))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/auth/request-access")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"" + email + "\"}"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("POST /api/auth/request-access para email inexistente retorna 404")
+    void requestAccessParaEmailInexistenteRetorna404() throws Exception {
+        String email = "ninguem." + nextAuthSeed() + "@teste.com";
+
+        mockMvc.perform(post("/api/auth/request-access")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"" + email + "\"}"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("POST /api/auth/request-access para usuário já ATIVO retorna 400")
+    void requestAccessParaUsuarioAtivoRetorna400() throws Exception {
+        long n = nextAuthSeed();
+        String email = "ativo.req." + n + "@teste.com";
+
+        MvcResult registerResult = mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(registerBody(n, email, "Senha123")))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String accessToken = extractCookie(registerResult, "accessToken");
+
+        MvcResult userResult = mockMvc.perform(get("/api/users/email/" + email)
+                        .cookie(new Cookie("accessToken", accessToken)))
+                .andExpect(status().isOk())
+                .andReturn();
+        String userId = extractIdFromJson(userResult.getResponse().getContentAsString());
+
+        mockMvc.perform(patch("/api/users/" + userId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"ATIVO\"}"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/auth/request-access")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"" + email + "\"}"))
+                .andExpect(status().isBadRequest());
     }
 
     private static String extractIdFromJson(String json) {
