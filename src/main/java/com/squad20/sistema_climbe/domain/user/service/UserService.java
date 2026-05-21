@@ -84,6 +84,19 @@ public class UserService {
         User user = userMapper.toEntity(request);
         user.setId(null);
         user = userRepository.save(user);
+
+        if (user.getEmail() != null && !user.getEmail().isBlank()) {
+            String subject = "Bem-vindo ao Sistema Climbe!";
+            String body = "Olá " + user.getFullName() + ",\n\nSeu cadastro foi criado pelo administrador! Você já pode acessar o sistema utilizando seu e-mail e a senha inicial configurada.\n\nEquipe Climbe";
+            emailPublisher.publish(
+                    EmailRoutingKeys.USER_WELCOME,
+                    EmailMessage.builder()
+                            .to(user.getEmail())
+                            .subject(subject)
+                            .body(body)
+                            .build());
+        }
+
         return userMapper.toDTO(user);
     }
 

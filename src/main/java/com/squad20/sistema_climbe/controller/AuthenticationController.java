@@ -3,7 +3,7 @@ package com.squad20.sistema_climbe.controller;
 
 import com.squad20.sistema_climbe.dto.AuthenticationRequest;
 import com.squad20.sistema_climbe.dto.AuthenticationResponse;
-import com.squad20.sistema_climbe.dto.RegisterRequest;
+import com.squad20.sistema_climbe.dto.AuthenticationResponse;
 import com.squad20.sistema_climbe.dto.RequestAccessRequest;
 import com.squad20.sistema_climbe.domain.user.dto.UserDTO;
 import com.squad20.sistema_climbe.service.AuthenticationService;
@@ -27,16 +27,7 @@ public class AuthenticationController {
 
     private final AuthenticationService service;
 
-    @Operation(summary = "Register", description = "Rota para registra Usuarios")
-    @PostMapping("/register")
-    public ResponseEntity<AuthenticationResponse> register(
-            @Valid @RequestBody RegisterRequest request
-    ) {
-        AuthenticationResponse response = service.register(request);
-        return ResponseEntity.ok()
-                .headers(generateAuthCookies(response.getToken(), response.getRefreshToken()))
-                .body(response);
-    }
+
 
     @Operation(summary = "Login", description = "Rota para logar Usuarios")
     @PostMapping("/login")

@@ -1,7 +1,7 @@
 package com.squad20.sistema_climbe.service;
 import com.squad20.sistema_climbe.dto.AuthenticationRequest;
 import com.squad20.sistema_climbe.dto.AuthenticationResponse;
-import com.squad20.sistema_climbe.dto.RegisterRequest;
+
 import com.squad20.sistema_climbe.dto.TokenRefreshResponse;
 import com.squad20.sistema_climbe.exception.ConflictException;
 import com.squad20.sistema_climbe.exception.ResourceNotFoundException;
@@ -38,34 +38,6 @@ public class AuthenticationService {
     private final NotificationService notificationService;
     private final UserMapper userMapper;
 
-    public AuthenticationResponse register(RegisterRequest request) {
-
-        if (repository.findByEmail(request.getEmail()).isPresent()) {
-            throw new ConflictException("Este e-mail já está em uso.");
-        }
-        if (repository.findByCpf(request.getCpf()).isPresent()) {
-            throw new ConflictException("Este CPF já está cadastrado.");
-        }
-
-        var user = User.builder()
-                .fullName(request.getFullName())
-                .cpf(request.getCpf())
-                .phone(request.getPhone())
-                .email(request.getEmail())
-                .passwordHash(passwordEncoder.encode(request.getPassword()))
-                .role(request.getRole())
-                .status("PENDENTE")
-                .build();
-
-        repository.save(user);
-        var jwtToken = jwtService.generateToken(user);
-        var refreshToken = refreshTokenService.createRefreshToken(user.getId());
-
-        return AuthenticationResponse.builder()
-                .token(jwtToken)
-                .refreshToken(refreshToken.getToken())
-                .build();
-    }
 
     public AuthenticationResponse authenticate(AuthenticationRequest request) throws AuthenticationException {
         authenticationManager.authenticate(

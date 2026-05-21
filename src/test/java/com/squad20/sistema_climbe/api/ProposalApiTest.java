@@ -179,7 +179,7 @@ class ProposalApiTest extends ApiTestBase {
     @DisplayName("Assigning the responsible analyst notifies the analyst")
     void assigningResponsibleAnalystNotifiesAnalyst() throws Exception {
         ProposalFixture proposal = createApprovedCommercialProposal();
-        UserFixture analyst = createUser(Role.ANALISTA_VALORES_IMOBILIARIOS);
+        UserFixture analyst = createUser(Role.ANALISTA_VI_SENIOR);
 
         mockMvc.perform(patch(getBasePath() + "/" + proposal.id())
                 .contentType(MediaType.APPLICATION_JSON)

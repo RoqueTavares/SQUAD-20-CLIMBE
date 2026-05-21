@@ -32,6 +32,10 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Locale;
 
+import com.squad20.sistema_climbe.service.GoogleWorkspaceService;
+import com.squad20.sistema_climbe.domain.spreadsheet.dto.SpreadsheetCreateRequest;
+import com.squad20.sistema_climbe.domain.spreadsheet.service.SpreadsheetService;
+
 @Service
 @RequiredArgsConstructor
 public class ContractService {
@@ -47,6 +51,8 @@ public class ContractService {
     private final ContractTeamRepository contractTeamRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
+    private final GoogleWorkspaceService googleWorkspaceService;
+    private final SpreadsheetService spreadsheetService;
 
     @Transactional(readOnly = true)
     public Page<ContractDTO> findAll(Pageable pageable) {
@@ -134,9 +140,45 @@ public class ContractService {
     }
 
     private void unlockResourcesForContract(Contract contract) {
-        // TODO: Integrate with GCP/SpreadsheetService to duplicate spreadsheet.
-        // Mocking the event for now as per user request.
-        System.out.println("MOCK: Recursos desbloqueados (GCP) para o contrato " + contract.getId());
+        System.out.println("Iniciando desbloqueio de recursos GCP para o contrato " + contract.getId());
+        try {
+            User ceoUser = userRepository.findByRole(com.squad20.sistema_climbe.domain.user.entity.Role.CEO).stream()
+                    .filter(u -> u.getGoogleRefreshToken() != null)
+                    .findFirst()
+                    .orElse(null);
+
+            if (ceoUser != null) {
+                List<String> teamEmails = contractTeamRepository.findByContract_Id(contract.getId()).stream()
+                        .map(ct -> ct.getUser().getEmail())
+                        .filter(email -> email != null && !email.isBlank())
+                        .toList();
+
+                String contractTitle = contract.getProposal().getEnterprise().getTradeName() != null ?
+                        contract.getProposal().getEnterprise().getTradeName() :
+                        contract.getProposal().getEnterprise().getLegalName();
+
+                String spreadsheetLink = googleWorkspaceService.createContractEnvironment(
+                        ceoUser.getGoogleRefreshToken(),
+                        contractTitle + " - Contrato " + contract.getId(),
+                        teamEmails
+                );
+
+                if (spreadsheetLink != null) {
+                    spreadsheetService.save(SpreadsheetCreateRequest.builder()
+                            .contractId(contract.getId())
+                            .googleSheetsUrl(spreadsheetLink)
+                            .locked(false)
+                            .viewPermission("TEAM_ONLY")
+                            .build());
+                    System.out.println("Planilha criada e salva no banco de dados com link: " + spreadsheetLink);
+                }
+            } else {
+                System.err.println("Nenhum CEO com token Google cadastrado para gerar os recursos de Workspace do Contrato " + contract.getId());
+            }
+        } catch (Exception e) {
+            System.err.println("Erro ao integrar com Google Workspace para o contrato " + contract.getId() + ": " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     @Transactional

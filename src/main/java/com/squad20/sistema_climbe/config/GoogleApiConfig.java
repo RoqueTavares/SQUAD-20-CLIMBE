@@ -68,4 +68,28 @@ public class GoogleApiConfig {
                 .setApplicationName(APPLICATION_NAME)
                 .build();
     }
+
+    public com.google.api.services.drive.Drive getDriveServiceFromRefreshToken(String refreshTokenStr) throws GeneralSecurityException, IOException {
+        final HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
+        GoogleCredentials credentials = UserCredentials.newBuilder()
+                .setClientId(clientId)
+                .setClientSecret(clientSecret)
+                .setRefreshToken(refreshTokenStr)
+                .build();
+        return new com.google.api.services.drive.Drive.Builder(httpTransport, JSON_FACTORY, new HttpCredentialsAdapter(credentials))
+                .setApplicationName(APPLICATION_NAME)
+                .build();
+    }
+
+    public Sheets getSheetsServiceFromRefreshToken(String refreshTokenStr) throws GeneralSecurityException, IOException {
+        final HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
+        GoogleCredentials credentials = UserCredentials.newBuilder()
+                .setClientId(clientId)
+                .setClientSecret(clientSecret)
+                .setRefreshToken(refreshTokenStr)
+                .build();
+        return new Sheets.Builder(httpTransport, JSON_FACTORY, new HttpCredentialsAdapter(credentials))
+                .setApplicationName(APPLICATION_NAME)
+                .build();
+    }
 }
