@@ -70,3 +70,5 @@ gcp-credentials.json
 
 # Documentação interna de trabalho (não versionada)
 docs/
+
+node_modules
