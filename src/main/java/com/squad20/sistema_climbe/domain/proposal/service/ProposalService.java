@@ -39,7 +39,10 @@ import java.util.List;
 public class ProposalService {
 
     private static final EnumSet<Role> ANALYST_ROLES = EnumSet.of(
-            Role.ANALISTA_VALORES_IMOBILIARIOS,
+            Role.ANALISTA_VI_TRAINEE,
+            Role.ANALISTA_VI_JUNIOR,
+            Role.ANALISTA_VI_PLENO,
+            Role.ANALISTA_VI_SENIOR,
             Role.ANALISTA_BPO_FINANCEIRO);
 
     private final ProposalRepository proposalRepository;

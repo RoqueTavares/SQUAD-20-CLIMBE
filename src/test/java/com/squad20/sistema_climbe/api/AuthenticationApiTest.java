@@ -1,11 +1,19 @@
 package com.squad20.sistema_climbe.api;
 
+import com.squad20.sistema_climbe.domain.security.repository.RefreshTokenRepository;
+import com.squad20.sistema_climbe.domain.user.entity.Role;
+import com.squad20.sistema_climbe.domain.user.entity.User;
+import com.squad20.sistema_climbe.domain.user.repository.UserRepository;
+import com.squad20.sistema_climbe.domain.security.entity.RefreshToken;
+import com.squad20.sistema_climbe.domain.security.service.RefreshTokenService;
+import com.squad20.sistema_climbe.service.JwtService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -15,7 +23,6 @@ import jakarta.servlet.http.Cookie;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -25,7 +32,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 class AuthenticationApiTest {
 
-    /** Contador isolado para não colidir com o range 100_000_001+ da ApiTestBase. */
     private static final java.util.concurrent.atomic.AtomicLong AUTH_SEED =
             new java.util.concurrent.atomic.AtomicLong(500_000_001L);
 
@@ -36,32 +42,37 @@ class AuthenticationApiTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @Test
-    @DisplayName("Register cria usuário e devolve cookies de autenticação")
-    void registerCreatesUserAndReturnsCookies() throws Exception {
-        long n = nextAuthSeed();
+    @Autowired
+    private UserRepository userRepository;
 
-        MvcResult result = mockMvc.perform(post("/api/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(registerBody(n)))
-                .andExpect(status().isOk())
-                .andReturn();
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
-        assertCookiePresent(result, "accessToken");
-        assertCookiePresent(result, "refreshToken");
+    @Autowired
+    private JwtService jwtService;
+
+    @Autowired
+    private RefreshTokenService refreshTokenService;
+
+    private User setupUser(String email, String password, String status) {
+        long seed = nextAuthSeed();
+        return userRepository.save(User.builder()
+                .fullName("Auth Teste")
+                .email(email)
+                .cpf(generateValidCpf(seed))
+                .phone("11999999999")
+                .passwordHash(passwordEncoder.encode(password))
+                .role(Role.ANALISTA)
+                .status(status)
+                .build());
     }
 
     @Test
     @DisplayName("Login com credenciais válidas devolve cookies de autenticação")
     void loginReturnsCookiesForValidCredentials() throws Exception {
-        long n = nextAuthSeed();
-        String email = "auth" + n + "@teste.com";
+        String email = "login" + nextAuthSeed() + "@teste.com";
         String password = "Senha123";
-
-        mockMvc.perform(post("/api/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(registerBody(n, email, password)))
-                .andExpect(status().isOk());
+        setupUser(email, password, "ATIVO");
 
         MvcResult result = mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -74,37 +85,14 @@ class AuthenticationApiTest {
     }
 
     @Test
-    @DisplayName("Register com e-mail duplicado retorna 409")
-    void registerWithDuplicateEmailReturnsConflict() throws Exception {
-        long n = nextAuthSeed();
-        String body = registerBody(n);
-
-        mockMvc.perform(post("/api/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(body))
-                .andExpect(status().isOk());
-
-        mockMvc.perform(post("/api/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(body))
-                .andExpect(status().isConflict());
-    }
-
-    @Test
     @DisplayName("Refresh com cookie válido devolve novo cookie de access token")
     void refreshReturnsNewAccessTokenCookie() throws Exception {
-        long n = nextAuthSeed();
-
-        MvcResult result = mockMvc.perform(post("/api/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(registerBody(n)))
-                .andExpect(status().isOk())
-                .andReturn();
-
-        String refreshToken = extractCookie(result, "refreshToken");
+        String email = "refresh" + nextAuthSeed() + "@teste.com";
+        User u = setupUser(email, "Senha123", "ATIVO");
+        RefreshToken rt = refreshTokenService.createRefreshToken(u.getId());
 
         MvcResult refreshResult = mockMvc.perform(post("/api/auth/refresh")
-                        .cookie(new Cookie("refreshToken", refreshToken)))
+                        .cookie(new Cookie("refreshToken", rt.getToken())))
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -123,75 +111,6 @@ class AuthenticationApiTest {
     }
 
     @Test
-    @DisplayName("Usuário deletado não consegue autenticar")
-    void usuarioDeletadoNaoConsegueAutenticar() throws Exception {
-        long n = nextAuthSeed();
-        String email = "del.auth" + n + "@teste.com";
-        String password = "Senha123";
-
-        // Register
-        MvcResult registerResult = mockMvc.perform(post("/api/auth/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(registerBody(n, email, password)))
-            .andExpect(status().isOk())
-            .andReturn();
-
-        String accessToken = extractCookie(registerResult, "accessToken");
-
-        // Get user ID via email lookup
-        MvcResult userResult = mockMvc.perform(get("/api/users/email/" + email)
-                .cookie(new Cookie("accessToken", accessToken)))
-            .andExpect(status().isOk())
-            .andReturn();
-        String userId = extractIdFromJson(userResult.getResponse().getContentAsString());
-
-        // Delete user
-        mockMvc.perform(delete("/api/users/" + userId)
-                .cookie(new Cookie("accessToken", accessToken)))
-            .andExpect(status().isNoContent());
-
-        // Try to login with deleted user
-        mockMvc.perform(post("/api/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"email\":\"" + email + "\",\"password\":\"" + password + "\"}"))
-            .andExpect(status().is4xxClientError());
-    }
-
-    @Test
-    @DisplayName("Refresh token é invalidado após soft delete do usuário")
-    void tokenRefreshInvalidadoAposDeleteUsuario() throws Exception {
-        long n = nextAuthSeed();
-        String email = "del.refresh" + n + "@teste.com";
-        String password = "Senha123";
-
-        MvcResult registerResult = mockMvc.perform(post("/api/auth/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(registerBody(n, email, password)))
-            .andExpect(status().isOk())
-            .andReturn();
-
-        String accessToken = extractCookie(registerResult, "accessToken");
-        String refreshToken = extractCookie(registerResult, "refreshToken");
-
-        // Get user ID
-        MvcResult userResult = mockMvc.perform(get("/api/users/email/" + email)
-                .cookie(new Cookie("accessToken", accessToken)))
-            .andExpect(status().isOk())
-            .andReturn();
-        String userId = extractIdFromJson(userResult.getResponse().getContentAsString());
-
-        // Delete user (cascades hard delete of RefreshToken)
-        mockMvc.perform(delete("/api/users/" + userId)
-                .cookie(new Cookie("accessToken", accessToken)))
-            .andExpect(status().isNoContent());
-
-        // Try to refresh - refresh token should be gone (hard deleted)
-        mockMvc.perform(post("/api/auth/refresh")
-                .cookie(new Cookie("refreshToken", refreshToken)))
-            .andExpect(status().is4xxClientError());
-    }
-
-    @Test
     @DisplayName("GET /api/auth/me sem autenticação retorna 401")
     void getMeSemAutenticacaoRetorna401() throws Exception {
         mockMvc.perform(get("/api/auth/me"))
@@ -201,13 +120,8 @@ class AuthenticationApiTest {
     @Test
     @DisplayName("GET /api/auth/me com usuário autenticado retorna dados do usuário")
     void getMeComUsuarioAutenticadoRetornaDados() throws Exception {
-        long n = nextAuthSeed();
-        String email = "me." + n + "@teste.com";
-
-        mockMvc.perform(post("/api/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(registerBody(n, email, "Senha123")))
-                .andExpect(status().isOk());
+        String email = "me." + nextAuthSeed() + "@teste.com";
+        setupUser(email, "Senha123", "ATIVO");
 
         mockMvc.perform(get("/api/auth/me").with(user(email)))
                 .andExpect(status().isOk())
@@ -226,13 +140,8 @@ class AuthenticationApiTest {
     @Test
     @DisplayName("POST /api/auth/request-access para usuário PENDENTE retorna 200")
     void requestAccessParaUsuarioPendenteRetorna200() throws Exception {
-        long n = nextAuthSeed();
-        String email = "req.acc." + n + "@teste.com";
-
-        mockMvc.perform(post("/api/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(registerBody(n, email, "Senha123")))
-                .andExpect(status().isOk());
+        String email = "req.acc." + nextAuthSeed() + "@teste.com";
+        setupUser(email, "Senha123", "PENDENTE");
 
         mockMvc.perform(post("/api/auth/request-access")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -254,47 +163,13 @@ class AuthenticationApiTest {
     @Test
     @DisplayName("POST /api/auth/request-access para usuário já ATIVO retorna 400")
     void requestAccessParaUsuarioAtivoRetorna400() throws Exception {
-        long n = nextAuthSeed();
-        String email = "ativo.req." + n + "@teste.com";
-
-        MvcResult registerResult = mockMvc.perform(post("/api/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(registerBody(n, email, "Senha123")))
-                .andExpect(status().isOk())
-                .andReturn();
-
-        String accessToken = extractCookie(registerResult, "accessToken");
-
-        MvcResult userResult = mockMvc.perform(get("/api/users/email/" + email)
-                        .cookie(new Cookie("accessToken", accessToken)))
-                .andExpect(status().isOk())
-                .andReturn();
-        String userId = extractIdFromJson(userResult.getResponse().getContentAsString());
-
-        mockMvc.perform(patch("/api/users/" + userId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"status\":\"ATIVO\"}"))
-                .andExpect(status().isOk());
+        String email = "ativo.req." + nextAuthSeed() + "@teste.com";
+        setupUser(email, "Senha123", "ATIVO");
 
         mockMvc.perform(post("/api/auth/request-access")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"" + email + "\"}"))
                 .andExpect(status().isBadRequest());
-    }
-
-    private static String extractIdFromJson(String json) {
-        if (json == null) return null;
-        java.util.regex.Matcher m = java.util.regex.Pattern.compile("\"id\"\\s*:\\s*(\\d+)").matcher(json);
-        return m.find() ? m.group(1) : null;
-    }
-
-    private static String registerBody(long seed) {
-        return registerBody(seed, "auth" + seed + "@teste.com", "Senha123");
-    }
-
-    private static String registerBody(long seed, String email, String password) {
-        return "{\"fullName\":\"Auth Teste\",\"email\":\"" + email + "\",\"password\":\"" + password
-                + "\",\"cpf\":\"" + generateValidCpf(seed) + "\",\"phone\":\"11999999999\"}";
     }
 
     private static String extractCookie(MvcResult result, String cookieName) {

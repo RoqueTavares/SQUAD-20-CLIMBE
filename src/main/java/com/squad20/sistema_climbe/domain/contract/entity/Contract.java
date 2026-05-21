@@ -36,4 +36,11 @@ public class Contract extends BaseEntity {
 
     @Column(name = "status", length = 50)
     private String status;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "analista_responsavel_id")
+    private com.squad20.sistema_climbe.domain.user.entity.User responsibleAnalyst;
+
+    @Column(name = "prazo_execucao")
+    private LocalDate executionDeadline;
 }
