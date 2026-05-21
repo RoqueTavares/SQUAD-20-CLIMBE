@@ -58,14 +58,28 @@ class AuthenticationApiTest {
         String email = "auth" + n + "@teste.com";
         String password = "Senha123";
 
-        mockMvc.perform(post("/api/auth/register")
+        MvcResult registerResult = mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(registerBody(n, email, password)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String accessToken = extractCookie(registerResult, "accessToken");
+        MvcResult userResult = mockMvc.perform(get("/api/users/email/" + email)
+                        .cookie(new Cookie("accessToken", accessToken)))
+                .andExpect(status().isOk())
+                .andReturn();
+        String userId = extractIdFromJson(userResult.getResponse().getContentAsString());
+
+        mockMvc.perform(patch("/api/users/" + userId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"ATIVO\"}"))
                 .andExpect(status().isOk());
 
         MvcResult result = mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"" + email + "\",\"password\":\"" + password + "\"}"))
+                .andDo(org.springframework.test.web.servlet.result.MockMvcResultHandlers.print())
                 .andExpect(status().isOk())
                 .andReturn();
 

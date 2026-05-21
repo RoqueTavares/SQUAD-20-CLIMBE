@@ -16,9 +16,12 @@ import com.squad20.sistema_climbe.domain.user.repository.UserRepository;
 import com.squad20.sistema_climbe.exception.BadRequestException;
 import com.squad20.sistema_climbe.exception.ConflictException;
 import com.squad20.sistema_climbe.exception.ResourceNotFoundException;
+import com.squad20.sistema_climbe.domain.notification.dto.NotificationCreateRequest;
+import com.squad20.sistema_climbe.domain.notification.service.NotificationService;
 import com.squad20.sistema_climbe.messaging.EmailMessage;
 import com.squad20.sistema_climbe.messaging.EmailPublisher;
 import com.squad20.sistema_climbe.messaging.EmailRoutingKeys;
+import com.squad20.sistema_climbe.domain.user.entity.Role;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -41,6 +44,7 @@ public class DocumentRequirementService {
     private final UserRepository userRepository;
     private final DocumentRequirementMapper documentRequirementMapper;
     private final EmailPublisher emailPublisher;
+    private final NotificationService notificationService;
 
     @Transactional
     public List<DocumentRequirementDTO> createRequirements(Long proposalId, DocumentRequirementCreateRequest request) {
@@ -121,6 +125,9 @@ public class DocumentRequirementService {
                 notifyEnterpriseDocumentNonCompliant(saved);
             } else if (patch.getStatus() == DocumentRequirementStatus.APPROVED) {
                 notifyEnterpriseDocumentApproved(saved);
+                if (checkIfAllDocumentsApproved(saved.getProposal().getId())) {
+                    notifySeniorAnalystsForDeadline(saved.getProposal());
+                }
             }
         }
 
@@ -224,7 +231,22 @@ public class DocumentRequirementService {
         );
     }
 
-    
+    private boolean checkIfAllDocumentsApproved(Long proposalId) {
+        List<DocumentRequirement> requirements = documentRequirementRepository.findByProposal_Id(proposalId);
+        if (requirements.isEmpty()) return false;
+        return requirements.stream().allMatch(req -> req.getStatus() == DocumentRequirementStatus.APPROVED);
+    }
+
+    private void notifySeniorAnalystsForDeadline(Proposal proposal) {
+        List<User> seniors = userRepository.findByRole(Role.ANALISTA_SENIOR);
+        for (User senior : seniors) {
+            notificationService.save(NotificationCreateRequest.builder()
+                    .userId(senior.getId())
+                    .type("ALL_DOCUMENTS_APPROVED")
+                    .message("Todos os documentos da proposta " + proposal.getId() + " foram aprovados. Por favor, defina o prazo de execução no contrato.")
+                    .build());
+        }
+    }
 
     private Proposal findProposalOrThrow(Long proposalId) {
         return proposalRepository.findById(proposalId)

@@ -20,8 +20,16 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.squad20.sistema_climbe.domain.contract.entity.ContractTeam;
+import com.squad20.sistema_climbe.domain.contract.repository.ContractTeamRepository;
+import com.squad20.sistema_climbe.domain.user.entity.User;
+import com.squad20.sistema_climbe.domain.user.repository.UserRepository;
+import com.squad20.sistema_climbe.domain.notification.service.NotificationService;
+import com.squad20.sistema_climbe.domain.notification.dto.NotificationCreateRequest;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Locale;
 
 @Service
@@ -36,6 +44,9 @@ public class ContractService {
     private final SpreadsheetRepository spreadsheetRepository;
     private final ProposalService proposalService;
     private final ContractMapper contractMapper;
+    private final ContractTeamRepository contractTeamRepository;
+    private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     @Transactional(readOnly = true)
     public Page<ContractDTO> findAll(Pageable pageable) {
@@ -86,6 +97,46 @@ public class ContractService {
         existing = contractRepository.save(existing);
         updateProposalIfContractWasSigned(existing);
         return contractMapper.toDTO(existing);
+    }
+
+    @Transactional
+    public ContractDTO setExecutionDeadline(Long id, LocalDate deadline) {
+        Contract contract = findContractOrThrow(id);
+        contract.setExecutionDeadline(deadline);
+        contract = contractRepository.save(contract);
+        return contractMapper.toDTO(contract);
+    }
+
+    @Transactional
+    public void assignTeam(Long contractId, List<Long> userIds, String roleInTeam) {
+        Contract contract = findContractOrThrow(contractId);
+        List<ContractTeam> teamMembers = new ArrayList<>();
+        for (Long userId : userIds) {
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado com id: " + userId));
+            
+            ContractTeam teamMember = ContractTeam.builder()
+                    .contract(contract)
+                    .user(user)
+                    .roleInTeam(roleInTeam)
+                    .build();
+            teamMembers.add(teamMember);
+            
+            notificationService.save(NotificationCreateRequest.builder()
+                    .userId(user.getId())
+                    .type("TEAM_ASSIGNMENT")
+                    .message("Você foi alocado no contrato " + contract.getId() + " como " + roleInTeam)
+                    .build());
+        }
+        contractTeamRepository.saveAll(teamMembers);
+        
+        unlockResourcesForContract(contract);
+    }
+
+    private void unlockResourcesForContract(Contract contract) {
+        // TODO: Integrate with GCP/SpreadsheetService to duplicate spreadsheet.
+        // Mocking the event for now as per user request.
+        System.out.println("MOCK: Recursos desbloqueados (GCP) para o contrato " + contract.getId());
     }
 
     @Transactional
