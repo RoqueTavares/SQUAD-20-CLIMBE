@@ -72,4 +72,16 @@ public class GoogleCloudStorageService {
         BlobId blobId = BlobId.of(bucketName, pathNoBucket);
         return storage.delete(blobId);
     }
+
+    /**
+     * Lista todos os nomes dos objetos presentes no bucket.
+     */
+    public java.util.List<String> listObjects() {
+        com.google.api.gax.paging.Page<com.google.cloud.storage.Blob> blobs = storage.list(bucketName);
+        java.util.List<String> fileNames = new java.util.ArrayList<>();
+        for (com.google.cloud.storage.Blob blob : blobs.iterateAll()) {
+            fileNames.add(blob.getName());
+        }
+        return fileNames;
+    }
 }
