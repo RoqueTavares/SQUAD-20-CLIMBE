@@ -42,6 +42,8 @@ Subir o backend do Sistema Climbe em Cloud Run com container stateless, banco ex
 - `APP_WEBSOCKET_BROKER_RELAY_VIRTUAL_HOST`
 - `APP_WEBSOCKET_BROKER_RELAY_USER_DESTINATION_BROADCAST`
 - `APP_WEBSOCKET_BROKER_RELAY_USER_REGISTRY_BROADCAST`
+- `APP_WEBSOCKET_BROKER_RELAY_SYSTEM_HEARTBEAT_SEND_INTERVAL`
+- `APP_WEBSOCKET_BROKER_RELAY_SYSTEM_HEARTBEAT_RECEIVE_INTERVAL`
 - `SPRING_MAIL_HOST`
 - `SPRING_MAIL_PORT`
 - `SPRING_MAIL_USERNAME`
@@ -67,6 +69,8 @@ Subir o backend do Sistema Climbe em Cloud Run com container stateless, banco ex
 - Configurar `CORS_ALLOWED_ORIGINS` com o domínio real do frontend; o WebSocket usa a mesma lista.
 - Usar `/actuator/health` como healthcheck público do container.
 - Manter `MANAGEMENT_HEALTH_MAIL_ENABLED=false` se SMTP for dependência externa não crítica de startup.
+
+Também vale para o broker relay: se `APP_WEBSOCKET_BROKER_RELAY_ENABLED=true`, informar credenciais STOMP explícitas e diferentes das credenciais locais.
 
 ## Primeiro Deploy Controlado
 

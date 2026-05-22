@@ -47,6 +47,10 @@ Variáveis do relay:
 - `APP_WEBSOCKET_BROKER_RELAY_VIRTUAL_HOST`
 - `APP_WEBSOCKET_BROKER_RELAY_USER_DESTINATION_BROADCAST`
 - `APP_WEBSOCKET_BROKER_RELAY_USER_REGISTRY_BROADCAST`
+- `APP_WEBSOCKET_BROKER_RELAY_SYSTEM_HEARTBEAT_SEND_INTERVAL`
+- `APP_WEBSOCKET_BROKER_RELAY_SYSTEM_HEARTBEAT_RECEIVE_INTERVAL`
+
+Com o relay ligado, as credenciais STOMP são obrigatórias. O sistema falha no startup se `client-login`, `client-passcode`, `system-login` ou `system-passcode` estiverem vazios.
 
 ## Estratégia De Rollout
 
