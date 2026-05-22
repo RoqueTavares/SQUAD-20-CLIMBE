@@ -54,6 +54,9 @@ class AuthenticationApiTest {
     @Autowired
     private RefreshTokenService refreshTokenService;
 
+    @Autowired
+    private RefreshTokenRepository refreshTokenRepository;
+
     private User setupUser(String email, String password, String status) {
         long seed = nextAuthSeed();
         return userRepository.save(User.builder()
@@ -100,6 +103,13 @@ class AuthenticationApiTest {
     }
 
     @Test
+    @DisplayName("Refresh sem cookie retorna 401")
+    void refreshSemCookieRetorna401() throws Exception {
+        mockMvc.perform(post("/api/auth/refresh"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
     @DisplayName("Logout limpa os cookies de autenticação")
     void logoutClearsCookies() throws Exception {
         MvcResult result = mockMvc.perform(post("/api/auth/logout"))
@@ -108,6 +118,22 @@ class AuthenticationApiTest {
 
         assertCookieCleared(result, "accessToken");
         assertCookieCleared(result, "refreshToken");
+    }
+
+    @Test
+    @DisplayName("Logout com refresh token revoga sessao no banco")
+    void logoutComRefreshTokenRevogaSessaoNoBanco() throws Exception {
+        String email = "logout" + nextAuthSeed() + "@teste.com";
+        User u = setupUser(email, "Senha123", "ATIVO");
+        RefreshToken rt = refreshTokenService.createRefreshToken(u.getId());
+
+        mockMvc.perform(post("/api/auth/logout")
+                        .cookie(new Cookie("refreshToken", rt.getToken())))
+                .andExpect(status().isNoContent());
+
+        if (refreshTokenRepository.findByToken(rt.getToken()).isPresent()) {
+            throw new AssertionError("Refresh token nao foi revogado no logout.");
+        }
     }
 
     @Test

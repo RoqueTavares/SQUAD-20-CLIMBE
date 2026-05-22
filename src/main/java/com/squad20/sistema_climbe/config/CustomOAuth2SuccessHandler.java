@@ -80,9 +80,10 @@ public class CustomOAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHa
         refreshTokenService.deleteByUserId(user.getId());
         var refreshToken = refreshTokenService.createRefreshToken(user.getId());
 
-        authCookieFactory.createAuthCookies(jwtToken, refreshToken.getToken())
-                .get(HttpHeaders.SET_COOKIE)
-                .forEach(cookie -> response.addHeader(HttpHeaders.SET_COOKIE, cookie));
+        HttpHeaders headers = authCookieFactory.createAuthCookies(jwtToken, refreshToken.getToken());
+        headers.forEach((headerName, values) ->
+                values.forEach(value -> response.addHeader(headerName, value))
+        );
 
         getRedirectStrategy().sendRedirect(request, response, frontendRedirectUrl);
     }
