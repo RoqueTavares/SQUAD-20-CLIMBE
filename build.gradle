@@ -48,6 +48,8 @@ dependencies {
     implementation 'io.projectreactor.netty:reactor-netty'
     compileOnly 'org.projectlombok:lombok'
     runtimeOnly 'org.postgresql:postgresql'
+    // Conector Cloud SQL para Postgres (conexão via socket no Cloud Run, sem expor IP)
+    runtimeOnly 'com.google.cloud.sql:postgres-socket-factory:1.21.0'
     annotationProcessor 'org.projectlombok:lombok'
     implementation 'org.mapstruct:mapstruct:1.5.5.Final'
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
