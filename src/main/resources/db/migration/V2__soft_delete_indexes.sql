@@ -21,3 +21,6 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_empresas_cnpj_active
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_empresas_email_active
     ON empresas(email) WHERE deleted_at IS NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_requisitos_proposta_tipo_active
+    ON requisitos_documentais(proposta_id, tipo_documento) WHERE deleted_at IS NULL;

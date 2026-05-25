@@ -83,7 +83,7 @@ public class DocumentRequirementService {
     @Transactional
     public DocumentRequirementDTO patchRequirement(Long id, DocumentRequirementPatchRequest patch) {
         DocumentRequirement requirement = documentRequirementRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Requisito documental nao encontrado com id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Requisito documental não encontrado com id: " + id));
 
         if (patch.getDeadline() != null) {
             requirement.setDeadline(patch.getDeadline());
@@ -91,7 +91,7 @@ public class DocumentRequirementService {
 
         if (patch.getValidatedById() != null) {
             User validatedBy = userRepository.findById(patch.getValidatedById())
-                    .orElseThrow(() -> new ResourceNotFoundException("Usuario nao encontrado com id: " + patch.getValidatedById()));
+                    .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado com id: " + patch.getValidatedById()));
             requirement.setValidatedBy(validatedBy);
         }
 
@@ -103,7 +103,7 @@ public class DocumentRequirementService {
             if (patch.getStatus() == DocumentRequirementStatus.NON_COMPLIANT) {
                 String reason = patch.getRejectionReason();
                 if (reason == null || reason.isBlank()) {
-                    throw new BadRequestException("rejectionReason e obrigatorio quando status for NON_COMPLIANT");
+                    throw new BadRequestException("rejectionReason é obrigatório quando status for NON_COMPLIANT");
                 }
                 requirement.setRejectionReason(reason);
                 requirement.setValidatedAt(LocalDateTime.now());
@@ -250,7 +250,7 @@ public class DocumentRequirementService {
 
     private Proposal findProposalOrThrow(Long proposalId) {
         return proposalRepository.findById(proposalId)
-                .orElseThrow(() -> new ResourceNotFoundException("Proposta nao encontrada com id: " + proposalId));
+                .orElseThrow(() -> new ResourceNotFoundException("Proposta não encontrada com id: " + proposalId));
     }
 
     private List<DocumentType> normalizeTypes(List<DocumentType> requestedTypes) {
@@ -261,10 +261,10 @@ public class DocumentRequirementService {
         Set<DocumentType> seen = new HashSet<>();
         for (DocumentType type : requestedTypes) {
             if (type == null) {
-                throw new BadRequestException("documentTypes nao pode conter itens nulos");
+                throw new BadRequestException("documentTypes não pode conter itens nulos");
             }
             if (!seen.add(type)) {
-                throw new BadRequestException("documentTypes nao pode conter tipos repetidos no payload");
+                throw new BadRequestException("documentTypes não pode conter tipos repetidos no payload");
             }
         }
 
@@ -274,7 +274,7 @@ public class DocumentRequirementService {
     private void validateNoDuplicateInProposal(Long proposalId, List<DocumentType> types) {
         for (DocumentType type : types) {
             if (documentRequirementRepository.existsByProposal_IdAndDocumentType(proposalId, type)) {
-                throw new ConflictException("Ja existe requisito documental ativo para proposta "
+                throw new ConflictException("Já existe requisito documental ativo para proposta "
                         + proposalId + " e tipo " + type);
             }
         }
