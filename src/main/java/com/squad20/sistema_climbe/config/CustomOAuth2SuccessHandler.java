@@ -8,8 +8,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -32,6 +32,10 @@ public class CustomOAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHa
     private final PasswordEncoder passwordEncoder;
     private final OAuth2AuthorizedClientService authorizedClientService;
     private final com.squad20.sistema_climbe.domain.notification.service.NotificationService notificationService;
+    private final AuthCookieFactory authCookieFactory;
+
+    @Value("${app.frontend.redirect-url:http://localhost:5173/dashboard}")
+    private String frontendRedirectUrl;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
@@ -76,26 +80,12 @@ public class CustomOAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHa
         refreshTokenService.deleteByUserId(user.getId());
         var refreshToken = refreshTokenService.createRefreshToken(user.getId());
 
-        ResponseCookie accessCookie = ResponseCookie.from("accessToken", jwtToken)
-                .httpOnly(true)
-                .secure(false)
-                .path("/")
-                .maxAge(24 * 60 * 60)
-                .sameSite("Lax")
-                .build();
+        HttpHeaders headers = authCookieFactory.createAuthCookies(jwtToken, refreshToken.getToken());
+        headers.forEach((headerName, values) ->
+                values.forEach(value -> response.addHeader(headerName, value))
+        );
 
-        ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", refreshToken.getToken())
-                .httpOnly(true)
-                .secure(false)
-                .path("/api/auth/refresh")
-                .maxAge(7 * 24 * 60 * 60)
-                .sameSite("Lax")
-                .build();
-
-        response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
-        response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
-
-        getRedirectStrategy().sendRedirect(request, response, "http://localhost:5173/dashboard");
+        getRedirectStrategy().sendRedirect(request, response, frontendRedirectUrl);
     }
 
     private void notifyAdmins(User newUser) {

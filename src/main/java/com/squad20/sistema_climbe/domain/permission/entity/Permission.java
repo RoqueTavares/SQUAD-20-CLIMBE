@@ -21,7 +21,7 @@ public class Permission extends BaseEntity {
     @Column(name = "id_permissao")
     private Long id;
 
-    // unique=true removido: substituído por partial index no banco (ver soft-delete-indexes.sql)
+    // unique=true removido: substituído por partial index no banco (ver V2__soft_delete_indexes.sql)
     @Column(name = "descricao", nullable = false, length = 255)
     private String description;
 }

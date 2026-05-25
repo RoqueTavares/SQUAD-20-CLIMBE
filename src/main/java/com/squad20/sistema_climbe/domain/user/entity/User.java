@@ -30,11 +30,11 @@ public class User extends BaseEntity implements UserDetails {
     @Column(name = "nome_completo", nullable = false, length = 255)
     private String fullName;
 
-    // unique=true removido: substituído por partial index no banco (ver soft-delete-indexes.sql)
+    // unique=true removido: substituído por partial index no banco (ver V2__soft_delete_indexes.sql)
     @Column(nullable = false, length = 14)
     private String cpf;
 
-    // unique=true removido: substituído por partial index no banco (ver soft-delete-indexes.sql)
+    // unique=true removido: substituído por partial index no banco (ver V2__soft_delete_indexes.sql)
     @Column(nullable = false, length = 255)
     private String email;
 

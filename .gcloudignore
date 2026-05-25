@@ -1,0 +1,27 @@
+# Arquivos que NÃO devem subir ao Cloud Build.
+# IMPORTANTE: ao contrário do .gitignore, aqui controlamos o que vai para a
+# imagem. O Dockerfile compila o jar dentro do container via Gradle Wrapper,
+# então o gradle-wrapper.jar PRECISA ser enviado (o Dockerfile depende dele).
+
+.git
+.gitignore
+
+# Artefatos de build locais (a imagem recompila do zero)
+.gradle/
+build/
+node_modules/
+
+# Segredos e credenciais — nunca enviar
+.env
+.env.*
+!.env.example
+**/gcp-credentials.json
+src/main/resources/gcp-credentials.json
+
+# Logs e temporários
+*.log
+hs_err_pid*
+replay_pid*
+
+# NÃO ignorar o wrapper do Gradle (necessário no build da imagem):
+!gradle/wrapper/gradle-wrapper.jar

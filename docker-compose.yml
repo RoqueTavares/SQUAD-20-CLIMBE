@@ -18,12 +18,16 @@ services:
     restart: always
     ports:
       - "5672:5672"
+      - "61613:61613"
       - "15672:15672"
     environment:
       - RABBITMQ_DEFAULT_USER=admin
       - RABBITMQ_DEFAULT_PASS=admin
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
+    command: >
+      sh -c "rabbitmq-plugins enable --offline rabbitmq_stomp &&
+             rabbitmq-server"
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "ping"]
       interval: 10s
@@ -35,7 +39,7 @@ services:
     container_name: spring_api
     restart: on-failure
     ports:
-      - "8080:8080"
+      - "${API_HOST_PORT:-8080}:8080"
     depends_on:
       - db
       - rabbitmq
@@ -57,6 +61,16 @@ services:
       - SPRING_RABBITMQ_PORT=5672
       - SPRING_RABBITMQ_USERNAME=admin
       - SPRING_RABBITMQ_PASSWORD=admin
+      - APP_WEBSOCKET_BROKER_RELAY_ENABLED=${APP_WEBSOCKET_BROKER_RELAY_ENABLED:-false}
+      - APP_WEBSOCKET_BROKER_RELAY_HOST=${APP_WEBSOCKET_BROKER_RELAY_HOST:-rabbitmq}
+      - APP_WEBSOCKET_BROKER_RELAY_PORT=${APP_WEBSOCKET_BROKER_RELAY_PORT:-61613}
+      - APP_WEBSOCKET_BROKER_RELAY_CLIENT_LOGIN=${APP_WEBSOCKET_BROKER_RELAY_CLIENT_LOGIN:-admin}
+      - APP_WEBSOCKET_BROKER_RELAY_CLIENT_PASSCODE=${APP_WEBSOCKET_BROKER_RELAY_CLIENT_PASSCODE:-admin}
+      - APP_WEBSOCKET_BROKER_RELAY_SYSTEM_LOGIN=${APP_WEBSOCKET_BROKER_RELAY_SYSTEM_LOGIN:-admin}
+      - APP_WEBSOCKET_BROKER_RELAY_SYSTEM_PASSCODE=${APP_WEBSOCKET_BROKER_RELAY_SYSTEM_PASSCODE:-admin}
+      - APP_WEBSOCKET_BROKER_RELAY_VIRTUAL_HOST=${APP_WEBSOCKET_BROKER_RELAY_VIRTUAL_HOST:-/}
+      - APP_WEBSOCKET_BROKER_RELAY_USER_DESTINATION_BROADCAST=${APP_WEBSOCKET_BROKER_RELAY_USER_DESTINATION_BROADCAST:-/topic/unresolved-user-destinations}
+      - APP_WEBSOCKET_BROKER_RELAY_USER_REGISTRY_BROADCAST=${APP_WEBSOCKET_BROKER_RELAY_USER_REGISTRY_BROADCAST:-/topic/simp-user-registry}
 
 
 volumes:

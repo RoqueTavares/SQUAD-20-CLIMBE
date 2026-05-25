@@ -55,6 +55,12 @@ public class RefreshTokenService {
         return refreshTokenRepository.deleteByUser(user);
     }
 
+    @Transactional
+    public void deleteByToken(String token) {
+        refreshTokenRepository.findByToken(token)
+                .ifPresent(refreshTokenRepository::delete);
+    }
+
     private User findUserOrThrow(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado com id: " + userId));
