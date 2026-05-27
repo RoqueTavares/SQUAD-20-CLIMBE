@@ -8,6 +8,9 @@ import com.squad20.sistema_climbe.domain.report.mapper.ReportMapper;
 import com.squad20.sistema_climbe.domain.report.repository.ReportRepository;
 import com.squad20.sistema_climbe.domain.contract.entity.Contract;
 import com.squad20.sistema_climbe.exception.ResourceNotFoundException;
+import com.squad20.sistema_climbe.exception.BadRequestException;
+import com.squad20.sistema_climbe.service.GoogleCloudStorageService;
+import com.google.cloud.storage.StorageException;
 import com.squad20.sistema_climbe.domain.contract.repository.ContractRepository;
 import com.squad20.sistema_climbe.domain.user.entity.User;
 import com.squad20.sistema_climbe.domain.user.repository.UserRepository;
@@ -16,13 +19,19 @@ import com.squad20.sistema_climbe.domain.notification.service.NotificationServic
 import com.squad20.sistema_climbe.domain.notification.dto.NotificationCreateRequest;
 import com.squad20.sistema_climbe.domain.service.entity.OfferedService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.Locale;
+import org.springframework.web.multipart.MultipartFile;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ReportService {
@@ -32,6 +41,7 @@ public class ReportService {
     private final UserRepository userRepository;
     private final NotificationService notificationService;
     private final ReportMapper reportMapper;
+    private final GoogleCloudStorageService storageService;
 
     @Transactional(readOnly = true)
     public Page<ReportDTO> findAll(Pageable pageable) {
@@ -62,6 +72,38 @@ public class ReportService {
         report.setStatus(ReportStatus.DRAFT);
         report = reportRepository.save(report);
         return reportMapper.toDTO(report);
+    }
+
+    @Transactional
+    public ReportDTO saveWithFile(ReportCreateRequest request, MultipartFile file) throws IOException {
+        validatePdfFile(file);
+
+        try {
+            String internalPath = storageService.uploadPrivateFile(file, "relatorios_contrato_" + request.getContractId());
+            request.setPdfUrl(internalPath);
+            if (request.getSentAt() == null) {
+                request.setSentAt(LocalDateTime.now());
+            }
+        } catch (StorageException e) {
+            log.error("Falha ao enviar relatorio para o Google Cloud Storage: {}", e.getMessage(), e);
+            throw new BadRequestException("Falha ao enviar PDF para o armazenamento. Verifique a configuracao do bucket.");
+        }
+
+        return save(request);
+    }
+
+    @Transactional(readOnly = true)
+    public String generateViewUrl(Long id) {
+        Report report = findReportOrThrow(id);
+        if (report.getPdfUrl() == null || report.getPdfUrl().isBlank()) {
+            throw new ResourceNotFoundException("Este relatorio nao possui PDF anexado.");
+        }
+
+        if (report.getPdfUrl().startsWith("http")) {
+            return report.getPdfUrl();
+        }
+
+        return storageService.generateSignedUrl(report.getPdfUrl());
     }
 
     @Transactional
@@ -160,6 +202,21 @@ public class ReportService {
     private Report findReportOrThrow(Long id) {
         return reportRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Relatório não encontrado com id: " + id));
+    }
+
+    private void validatePdfFile(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new BadRequestException("Selecione um arquivo PDF para o relatorio.");
+        }
+
+        String contentType = file.getContentType();
+        String fileName = file.getOriginalFilename();
+        boolean hasPdfContentType = "application/pdf".equalsIgnoreCase(contentType);
+        boolean hasPdfExtension = fileName != null && fileName.toLowerCase(Locale.ROOT).endsWith(".pdf");
+
+        if (!hasPdfContentType || !hasPdfExtension) {
+            throw new BadRequestException("Somente arquivos PDF podem ser anexados como relatorio.");
+        }
     }
 }
 

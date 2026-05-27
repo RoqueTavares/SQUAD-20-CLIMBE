@@ -63,6 +63,7 @@ public class MeetingService {
 
         Set<User> participants = resolveParticipants(request.getParticipantIds());
         validateNoTimeConflict(request.getDate(), request.getTime(), request.getEndTime(), request.getParticipantIds(), null);
+        validateNoRoomConflict(request.getDate(), request.getTime(), request.getEndTime(), request.getInPerson(), request.getLocation(), null);
 
         Meeting meeting = meetingMapper.toEntity(request);
         meeting.setId(null);
@@ -143,6 +144,7 @@ public class MeetingService {
         java.time.LocalTime checkEnd = existing.getEndTime();
         List<Long> participantIds = existing.getParticipants().stream().map(User::getId).toList();
         validateNoTimeConflict(checkDate, checkStart, checkEnd, participantIds, existing.getId());
+        validateNoRoomConflict(checkDate, checkStart, checkEnd, existing.getInPerson(), existing.getLocation(), existing.getId());
 
         existing = meetingRepository.save(existing);
         return meetingMapper.toDTO(existing);
@@ -192,6 +194,41 @@ public class MeetingService {
                     "Conflito de agenda: Um ou mais participantes já possuem uma reunião marcada neste horário (" + 
                     existingStart + " - " + existingEnd + ")."
                 );
+            }
+        }
+    }
+
+    private void validateNoRoomConflict(
+            java.time.LocalDate date,
+            java.time.LocalTime startTime,
+            java.time.LocalTime endTime,
+            Boolean inPerson,
+            String location,
+            Long excludeMeetingId) {
+        if (!Boolean.TRUE.equals(inPerson) || date == null || startTime == null || location == null || location.isBlank()) {
+            return;
+        }
+
+        java.time.LocalTime newEnd = endTime != null ? endTime : startTime.plusHours(1);
+        for (Meeting meeting : meetingRepository.findInPersonMeetingsByDate(date)) {
+            if (excludeMeetingId != null && meeting.getId().equals(excludeMeetingId)) {
+                continue;
+            }
+            if (meeting.getLocation() == null || !location.trim().equalsIgnoreCase(meeting.getLocation().trim())) {
+                continue;
+            }
+            java.time.LocalTime existingStart = meeting.getTime();
+            if (existingStart == null) {
+                continue;
+            }
+            java.time.LocalTime existingEnd = meeting.getEndTime() != null
+                    ? meeting.getEndTime()
+                    : existingStart.plusHours(1);
+
+            if (startTime.isBefore(existingEnd) && newEnd.isAfter(existingStart)) {
+                throw new com.squad20.sistema_climbe.exception.ConflictException(
+                        "Conflito de sala: A sala selecionada ja esta ocupada neste horario ("
+                                + existingStart + " - " + existingEnd + ").");
             }
         }
     }

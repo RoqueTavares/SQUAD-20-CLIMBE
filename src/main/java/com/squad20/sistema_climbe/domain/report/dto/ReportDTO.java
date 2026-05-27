@@ -4,6 +4,7 @@ import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import com.squad20.sistema_climbe.domain.report.entity.ReportStatus;
 
 @Getter
 @Setter
@@ -20,4 +21,8 @@ public class ReportDTO {
     private String pdfUrl;
 
     private LocalDateTime sentAt;
+
+    private LocalDateTime createdAt;
+
+    private ReportStatus status;
 }

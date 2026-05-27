@@ -7,8 +7,10 @@ import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import org.springframework.http.MediaType;
 
 /** Testes da API /api/meetings. GET lista e GET 404; POST exige enterpriseId e título. */
 class MeetingApiTest extends ApiTestBase {
@@ -85,5 +87,24 @@ class MeetingApiTest extends ApiTestBase {
         mockMvc.perform(get(getBasePath() + "/" + meetingId))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.participantIds", not(hasItem(Integer.parseInt(user.id())))));
+    }
+
+    @Test
+    @DisplayName("POST recusa sala presencial ocupada no mesmo horario")
+    void postRecusaSalaPresencialOcupada() throws Exception {
+        String enterpriseId = createEnterprise();
+        String firstMeeting = "{\"enterpriseId\":" + enterpriseId
+                + ",\"title\":\"Reuniao Sala 1\",\"date\":\"2026-05-27\",\"time\":\"14:00:00\",\"endTime\":\"15:00:00\""
+                + ",\"inPerson\":true,\"location\":\"Sala de Reunioes 1\"}";
+        String conflictingMeeting = "{\"enterpriseId\":" + enterpriseId
+                + ",\"title\":\"Reuniao Sala 2\",\"date\":\"2026-05-27\",\"time\":\"14:30:00\",\"endTime\":\"15:30:00\""
+                + ",\"inPerson\":true,\"location\":\"Sala de Reunioes 1\"}";
+
+        createResource(getBasePath(), firstMeeting);
+
+        mockMvc.perform(post(getBasePath())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(conflictingMeeting))
+                .andExpect(status().isConflict());
     }
 }

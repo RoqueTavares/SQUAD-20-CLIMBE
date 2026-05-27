@@ -2,9 +2,13 @@ package com.squad20.sistema_climbe.api;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 
+import static org.hamcrest.Matchers.startsWith;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -61,5 +65,46 @@ class ReportApiTest extends ApiTestBase {
         mockMvc.perform(get(getBasePath() + "?size=200"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.content[?(@.id == " + reportId + ")]").isEmpty());
+    }
+
+    @Test
+    @DisplayName("POST upload recebe PDF e vincula ao relatorio")
+    void postUploadRecebePdf() throws Exception {
+        ContractFixture contract = createContract();
+        MockMultipartFile data = new MockMultipartFile(
+                "data", "data.json", MediaType.APPLICATION_JSON_VALUE,
+                ("{\"contractId\":" + contract.id() + "}").getBytes());
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "resultado.pdf", MediaType.APPLICATION_PDF_VALUE, "%PDF-1.4".getBytes());
+
+        mockMvc.perform(multipart(getBasePath() + "/upload").file(data).file(file))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.contractId").value(Integer.parseInt(contract.id())))
+                .andExpect(jsonPath("$.pdfUrl", startsWith("relatorios_contrato_" + contract.id() + "/")));
+    }
+
+    @Test
+    @DisplayName("POST upload recusa arquivo que nao seja PDF")
+    void postUploadRecusaArquivoNaoPdf() throws Exception {
+        ContractFixture contract = createContract();
+        MockMultipartFile data = new MockMultipartFile(
+                "data", "data.json", MediaType.APPLICATION_JSON_VALUE,
+                ("{\"contractId\":" + contract.id() + "}").getBytes());
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "resultado.txt", MediaType.TEXT_PLAIN_VALUE, "texto".getBytes());
+
+        mockMvc.perform(multipart(getBasePath() + "/upload").file(data).file(file))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("GET view retorna URL externa previamente cadastrada")
+    void getViewRetornaUrlCadastrada() throws Exception {
+        ContractFixture contract = createContract();
+        String reportId = createReport(contract.id());
+
+        mockMvc.perform(get(getBasePath() + "/" + reportId + "/view"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", startsWith("https://teste.com/report-")));
     }
 }
