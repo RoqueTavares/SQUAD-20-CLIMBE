@@ -57,7 +57,9 @@ public class DocumentController {
     @Operation(summary = "Criar documento", description = "Cadastra um novo documento subindo o arquivo para o GCP Bucket")
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<DocumentDTO> save(
+            @Parameter(description = "Dados do documento em formato JSON", content = @io.swagger.v3.oas.annotations.media.Content(mediaType = MediaType.APPLICATION_JSON_VALUE))
             @RequestPart("data") @Valid DocumentCreateRequest request,
+            @Parameter(description = "Arquivo do documento")
             @RequestPart(value = "file", required = false) MultipartFile file) throws java.io.IOException {
         return ResponseEntity.status(HttpStatus.CREATED).body(documentService.saveWithFile(request, file));
     }
