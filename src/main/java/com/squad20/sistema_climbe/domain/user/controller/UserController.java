@@ -74,6 +74,7 @@ public class UserController {
     }
 
     @Operation(summary = "Atualizar usuário", description = "Atualiza um usuário existente (parcial)")
+    @PreAuthorize("hasRole('CEO') or hasRole('ADMIN')")
     @PatchMapping("/{id}")
     public ResponseEntity<UserDTO> update(
             @Parameter(description = "ID do usuário") @PathVariable Long id,
@@ -81,12 +82,13 @@ public class UserController {
         return ResponseEntity.ok(userService.update(id, patch));
     }
 
-    @Operation(summary = "Aprovar usuário pendente", description = "Aprova um usuário que veio via OAuth e dispara email de boas-vindas")
+    @Operation(summary = "Aprovar usuário pendente", description = "Aprova um usuário, atribuindo um cargo e ativando seu acesso")
     @PreAuthorize("hasRole('CEO')")
     @PatchMapping("/{id}/approve")
     public ResponseEntity<Void> approveUser(
-            @Parameter(description = "ID do usuário a ser aprovado") @PathVariable Long id) {
-        userService.approveUser(id);
+            @Parameter(description = "ID do usuário a ser aprovado") @PathVariable Long id,
+            @Valid @RequestBody com.squad20.sistema_climbe.domain.user.dto.UserApproveRequest request) {
+        userService.approveUser(id, request.getRole());
         return ResponseEntity.noContent().build();
     }
 

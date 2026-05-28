@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Contrato de Prestação de Serviços</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            line-height: 1.6;
+            margin: 40px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 20px;
+            text-transform: uppercase;
+        }
+        .section {
+            margin-bottom: 20px;
+        }
+        .section-title {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        .signatures {
+            margin-top: 50px;
+            text-align: center;
+        }
+        .signatures .sign-box {
+            display: inline-block;
+            width: 45%;
+            margin-top: 40px;
+            border-top: 1px solid #000;
+            padding-top: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>CONTRATO DE PRESTAÇÃO DE SERVIÇOS DE CONSULTORIA</h1>
+    <p>Identificador Único: <span th:text="${contractId}">000</span></p>
+</div>
+
+<div class="section">
+    <div class="section-title">1. DAS PARTES</div>
+    <p>
+        <strong>CONTRATANTE:</strong> <span th:text="${companyName}">Nome da Empresa</span>, inscrita no CNPJ sob o nº <span th:text="${cnpj}">00.000.000/0000-00</span>.<br/>
+        <strong>CONTRATADA:</strong> SISTEMA CLIMBE ASSESSORIA E CONSULTORIA LTDA, inscrita no CNPJ sob o nº 12.345.678/0001-99.
+    </p>
+</div>
+
+<div class="section">
+    <div class="section-title">2. DO OBJETO</div>
+    <p>
+        O presente contrato tem por objeto a prestação de serviços de consultoria financeira e BPO pela CONTRATADA à CONTRATANTE, de acordo com os termos estabelecidos na proposta comercial aprovada.
+    </p>
+</div>
+
+<div class="section">
+    <div class="section-title">3. DA VIGÊNCIA</div>
+    <p>
+        O presente contrato terá vigência a partir da data de sua assinatura pelas partes.
+    </p>
+    <p>
+        Data de Início Prevista: <span th:text="${startDate}">DD/MM/AAAA</span>
+    </p>
+</div>
+
+<div class="signatures">
+    <div class="sign-box" style="float: left;">
+        <strong>CONTRATANTE</strong><br/>
+        <span th:text="${companyName}">Nome da Empresa</span>
+    </div>
+    <div class="sign-box" style="float: right;">
+        <strong>CONTRATADA</strong><br/>
+        SISTEMA CLIMBE
+    </div>
+</div>
+
+</body>
+</html>

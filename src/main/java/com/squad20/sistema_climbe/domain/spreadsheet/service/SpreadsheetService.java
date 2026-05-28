@@ -76,6 +76,9 @@ public class SpreadsheetService {
     @Transactional
     public void delete(Long id) {
         Spreadsheet spreadsheet = findSpreadsheetOrThrow(id);
+        if (Boolean.TRUE.equals(spreadsheet.getLocked())) {
+            throw new com.squad20.sistema_climbe.exception.BadRequestException("Não é permitido excluir uma planilha bloqueada (matriz).");
+        }
         spreadsheet.setDeletedAt(java.time.LocalDateTime.now());
         spreadsheetRepository.save(spreadsheet);
     }

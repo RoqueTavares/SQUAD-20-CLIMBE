@@ -195,6 +195,9 @@ public class ProposalService {
             case PENDING_ADJUSTMENTS -> newStatus == ProposalStatus.IN_TRIAGE;
             case COMMERCIAL_PROPOSAL -> newStatus == ProposalStatus.COMMERCIAL_PROPOSAL_APPROVED
                     || newStatus == ProposalStatus.COMMERCIAL_PROPOSAL_REJECTED;
+            case COMMERCIAL_PROPOSAL_REJECTED -> newStatus == ProposalStatus.RECEIVED 
+                    || newStatus == ProposalStatus.IN_TRIAGE 
+                    || newStatus == ProposalStatus.COMMERCIAL_PROPOSAL;
             default -> false;
         };
 
