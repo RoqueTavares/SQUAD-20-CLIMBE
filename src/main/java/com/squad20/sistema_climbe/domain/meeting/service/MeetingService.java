@@ -63,6 +63,9 @@ public class MeetingService {
 
         Set<User> participants = resolveParticipants(request.getParticipantIds());
         validateNoTimeConflict(request.getDate(), request.getTime(), request.getEndTime(), request.getParticipantIds(), null);
+        if (Boolean.TRUE.equals(request.getInPerson())) {
+            validateRoomAvailability(request.getDate(), request.getTime(), request.getEndTime(), null);
+        }
 
         Meeting meeting = meetingMapper.toEntity(request);
         meeting.setId(null);
@@ -143,6 +146,9 @@ public class MeetingService {
         java.time.LocalTime checkEnd = existing.getEndTime();
         List<Long> participantIds = existing.getParticipants().stream().map(User::getId).toList();
         validateNoTimeConflict(checkDate, checkStart, checkEnd, participantIds, existing.getId());
+        if (Boolean.TRUE.equals(existing.getInPerson())) {
+            validateRoomAvailability(checkDate, checkStart, checkEnd, existing.getId());
+        }
 
         existing = meetingRepository.save(existing);
         return meetingMapper.toDTO(existing);
@@ -190,6 +196,29 @@ public class MeetingService {
             if (newStart.isBefore(existingEnd) && newEnd.isAfter(existingStart)) {
                 throw new com.squad20.sistema_climbe.exception.ConflictException(
                     "Conflito de agenda: Um ou mais participantes já possuem uma reunião marcada neste horário (" + 
+                    existingStart + " - " + existingEnd + ")."
+                );
+            }
+        }
+    }
+
+    private void validateRoomAvailability(java.time.LocalDate date, java.time.LocalTime startTime, java.time.LocalTime endTime, Long excludeMeetingId) {
+        if (date == null || startTime == null) return;
+        
+        java.time.LocalTime newStart = startTime;
+        java.time.LocalTime newEnd = endTime != null ? endTime : startTime.plusHours(1);
+
+        List<Meeting> dayMeetings = meetingRepository.findMeetingsByDateAndInPersonTrue(date);
+        for (Meeting m : dayMeetings) {
+            if (excludeMeetingId != null && m.getId().equals(excludeMeetingId)) continue;
+            
+            java.time.LocalTime existingStart = m.getTime();
+            java.time.LocalTime existingEnd = m.getEndTime() != null ? m.getEndTime() : existingStart.plusHours(1);
+
+            // A_start < B_end AND A_end > B_start => Overlap!
+            if (newStart.isBefore(existingEnd) && newEnd.isAfter(existingStart)) {
+                throw new com.squad20.sistema_climbe.exception.ConflictException(
+                    "Conflito de agenda: A sala de reuniões física já está ocupada neste horário (" + 
                     existingStart + " - " + existingEnd + ")."
                 );
             }

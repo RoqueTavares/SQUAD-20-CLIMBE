@@ -108,6 +108,9 @@ public class DocumentRequirementService {
                 requirement.setRejectionReason(reason);
                 requirement.setValidatedAt(LocalDateTime.now());
             } else if (patch.getStatus() == DocumentRequirementStatus.APPROVED) {
+                if (requirement.getDocument() == null) {
+                    throw new BadRequestException("Não é possível aprovar um requisito documental sem um arquivo anexado.");
+                }
                 requirement.setRejectionReason(null);
                 requirement.setValidatedAt(LocalDateTime.now());
             } else if (patch.getRejectionReason() != null) {

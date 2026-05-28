@@ -35,6 +35,7 @@ import java.util.Locale;
 import com.squad20.sistema_climbe.service.GoogleWorkspaceService;
 import com.squad20.sistema_climbe.domain.spreadsheet.dto.SpreadsheetCreateRequest;
 import com.squad20.sistema_climbe.domain.spreadsheet.service.SpreadsheetService;
+import com.squad20.sistema_climbe.service.GoogleCloudStorageService;
 
 @Service
 @RequiredArgsConstructor
@@ -53,6 +54,9 @@ public class ContractService {
     private final NotificationService notificationService;
     private final GoogleWorkspaceService googleWorkspaceService;
     private final SpreadsheetService spreadsheetService;
+    private final PdfGeneratorService pdfGeneratorService;
+    private final SignatureService signatureService;
+    private final GoogleCloudStorageService googleCloudStorageService;
 
     @Transactional(readOnly = true)
     public Page<ContractDTO> findAll(Pageable pageable) {
@@ -81,6 +85,26 @@ public class ContractService {
         contract.setId(null);
         contract.setProposal(proposal);
         contract = contractRepository.save(contract);
+
+        try {
+            // Gera o PDF
+            byte[] pdfBytes = pdfGeneratorService.generateContractPdf(contract);
+            
+            // Faz upload para o Storage
+            String fileName = "contrato_" + contract.getId() + ".pdf";
+            String pdfUrl = googleCloudStorageService.uploadPrivateFileBytes(pdfBytes, fileName, "contratos", "application/pdf");
+            contract.setPdfUrl(pdfUrl);
+            
+            // Simula envio para assinatura
+            String signatureId = signatureService.sendDocumentForSignature(contract, pdfUrl);
+            contract.setExternalSignatureId(signatureId);
+            
+            // Atualiza com URL e ID de assinatura
+            contract = contractRepository.save(contract);
+        } catch (Exception e) {
+            System.err.println("Erro ao gerar/enviar PDF do contrato: " + e.getMessage());
+            e.printStackTrace();
+        }
 
         updateProposalIfContractWasSigned(contract);
         return contractMapper.toDTO(contract);

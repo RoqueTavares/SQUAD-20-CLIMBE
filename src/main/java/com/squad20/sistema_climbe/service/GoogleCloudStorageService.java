@@ -45,6 +45,19 @@ public class GoogleCloudStorageService {
         return uniqueFileName;
     }
 
+    public String uploadPrivateFileBytes(byte[] bytes, String fileName, String folderName, String contentType) {
+        String uniqueFileName = folderName + "/" + UUID.randomUUID() + "-" + fileName;
+
+        BlobId blobId = BlobId.of(bucketName, uniqueFileName);
+        BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
+                .setContentType(contentType)
+                .build();
+
+        storage.create(blobInfo, bytes);
+
+        return uniqueFileName;
+    }
+
     /**
      * Gera uma "Signed URL" (URL Assinada).
      * Esse é o segredo de arquivos privados: É um link válido por apenas 30 minutos

@@ -43,4 +43,10 @@ public class Contract extends BaseEntity {
 
     @Column(name = "prazo_execucao")
     private LocalDate executionDeadline;
+
+    @Column(name = "url_pdf", length = 1000)
+    private String pdfUrl;
+
+    @Column(name = "id_assinatura_externa", length = 255)
+    private String externalSignatureId;
 }

@@ -142,18 +142,19 @@ public class UserService {
     }
 
     @Transactional
-    public void approveUser(Long id) {
+    public void approveUser(Long id, com.squad20.sistema_climbe.domain.user.entity.Role role) {
         User user = findUserOrThrow(id);
         if ("ATIVO".equals(user.getStatus())) {
             throw new com.squad20.sistema_climbe.exception.BadRequestException("Usuário já está ativo.");
         }
         
         user.setStatus("ATIVO");
+        user.setRole(role);
         userRepository.save(user);
 
         if (user.getEmail() != null && !user.getEmail().isBlank()) {
             String subject = "Bem-vindo ao Sistema Climbe!";
-            String body = "Olá " + user.getFullName() + ",\n\nSeu cadastro foi aprovado pelo administrador! Você já pode acessar o sistema utilizando seu e-mail e as credenciais configuradas.\n\nEquipe Climbe";
+            String body = "Olá " + user.getFullName() + ",\n\nSeu cadastro foi aprovado pelo administrador e agora você possui o cargo de " + role.name() + "! Você já pode acessar o sistema.\n\nEquipe Climbe";
             emailPublisher.publish(
                     EmailRoutingKeys.USER_WELCOME,
                     EmailMessage.builder()
