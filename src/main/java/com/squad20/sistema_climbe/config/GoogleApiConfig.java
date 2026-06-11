@@ -24,10 +24,10 @@ public class GoogleApiConfig {
     private static final String APPLICATION_NAME = "Sistema Climbe";
     private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
 
-    @Value("${spring.security.oauth2.client.registration.google.client-id}")
+    @Value("${spring.security.oauth2.client.registration.google.client-id:}")
     private String clientId;
 
-    @Value("${spring.security.oauth2.client.registration.google.client-secret}")
+    @Value("${spring.security.oauth2.client.registration.google.client-secret:}")
     private String clientSecret;
 
     private HttpRequestInitializer createRequestInitializer(String accessTokenStr) {
@@ -58,6 +58,7 @@ public class GoogleApiConfig {
     }
 
     public Calendar getCalendarServiceFromRefreshToken(String refreshTokenStr) throws GeneralSecurityException, IOException {
+        validateOAuthClientCredentials();
         final HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
         GoogleCredentials credentials = UserCredentials.newBuilder()
                 .setClientId(clientId)
@@ -70,6 +71,7 @@ public class GoogleApiConfig {
     }
 
     public com.google.api.services.drive.Drive getDriveServiceFromRefreshToken(String refreshTokenStr) throws GeneralSecurityException, IOException {
+        validateOAuthClientCredentials();
         final HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
         GoogleCredentials credentials = UserCredentials.newBuilder()
                 .setClientId(clientId)
@@ -82,6 +84,7 @@ public class GoogleApiConfig {
     }
 
     public Sheets getSheetsServiceFromRefreshToken(String refreshTokenStr) throws GeneralSecurityException, IOException {
+        validateOAuthClientCredentials();
         final HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
         GoogleCredentials credentials = UserCredentials.newBuilder()
                 .setClientId(clientId)
@@ -91,5 +94,11 @@ public class GoogleApiConfig {
         return new Sheets.Builder(httpTransport, JSON_FACTORY, new HttpCredentialsAdapter(credentials))
                 .setApplicationName(APPLICATION_NAME)
                 .build();
+    }
+
+    private void validateOAuthClientCredentials() {
+        if (clientId == null || clientId.isBlank() || clientSecret == null || clientSecret.isBlank()) {
+            throw new IllegalStateException("Google OAuth client id/secret must be configured to use refresh-token Google API integrations.");
+        }
     }
 }
