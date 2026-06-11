@@ -117,6 +117,7 @@ public class ContractService {
         if (patch.getStartDate() != null) existing.setStartDate(patch.getStartDate());
         if (patch.getEndDate() != null) existing.setEndDate(patch.getEndDate());
         if (patch.getStatus() != null) existing.setStatus(patch.getStatus());
+        if (patch.getTotalValue() != null) existing.setTotalValue(patch.getTotalValue());
 
         if (patch.getProposalId() != null) {
             Proposal proposal = findProposalOrThrow(patch.getProposalId());

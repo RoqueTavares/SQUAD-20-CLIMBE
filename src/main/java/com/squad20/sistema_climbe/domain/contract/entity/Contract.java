@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.SQLRestriction;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 // Filtro automático: Hibernate injeta "AND deleted_at IS NULL" em todas as queries desta entidade.
@@ -36,6 +37,9 @@ public class Contract extends BaseEntity {
 
     @Column(name = "status", length = 50)
     private String status;
+
+    @Column(name = "valor_total", precision = 15, scale = 2)
+    private BigDecimal totalValue;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "analista_responsavel_id")

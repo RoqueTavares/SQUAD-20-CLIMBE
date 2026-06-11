@@ -18,6 +18,9 @@ import com.squad20.sistema_climbe.domain.report.entity.ReportStatus;
 import com.squad20.sistema_climbe.domain.notification.service.NotificationService;
 import com.squad20.sistema_climbe.domain.notification.dto.NotificationCreateRequest;
 import com.squad20.sistema_climbe.domain.service.entity.OfferedService;
+import com.squad20.sistema_climbe.domain.document.service.DocumentRequirementService;
+import com.squad20.sistema_climbe.domain.meeting.dto.MeetingCreateRequest;
+import com.squad20.sistema_climbe.domain.meeting.service.MeetingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -27,8 +30,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Locale;
+import java.util.Objects;
 import org.springframework.web.multipart.MultipartFile;
 
 @Slf4j
@@ -42,6 +48,8 @@ public class ReportService {
     private final NotificationService notificationService;
     private final ReportMapper reportMapper;
     private final GoogleCloudStorageService storageService;
+    private final MeetingService meetingService;
+    private final DocumentRequirementService documentRequirementService;
 
     @Transactional(readOnly = true)
     public Page<ReportDTO> findAll(Pageable pageable) {
@@ -167,8 +175,25 @@ public class ReportService {
     }
 
     private void schedulePresentation(Contract contract) {
-        // MOCK: Integration with MeetingService
-        System.out.println("MOCK: Reunião de Apresentação agendada para o contrato " + contract.getId());
+        if (contract.getProposal() == null || contract.getProposal().getEnterprise() == null) {
+            log.warn("Contrato {} sem proposta/empresa; reunião de apresentação não agendada.", contract.getId());
+            return;
+        }
+
+        MeetingCreateRequest request = MeetingCreateRequest.builder()
+                .enterpriseId(contract.getProposal().getEnterprise().getId())
+                .title("Apresentação do relatório - Contrato #" + contract.getId())
+                .date(LocalDate.now().plusDays(7))
+                .time(LocalTime.of(14, 0))
+                .endTime(LocalTime.of(15, 0))
+                .inPerson(false)
+                .location("Google Meet / link a definir")
+                .agenda("Apresentação do relatório aprovado para a empresa contratante.")
+                .status("AGENDADA")
+                .participantIds(resolvePresentationParticipants(contract))
+                .build();
+
+        meetingService.save(request);
     }
 
     @Transactional
@@ -176,27 +201,57 @@ public class ReportService {
         Contract contract = contractRepository.findById(contractId)
                 .orElseThrow(() -> new ResourceNotFoundException("Contrato não encontrado."));
         
-        System.out.println("MOCK: Reunião de Apresentação concluída para o contrato " + contract.getId());
-        
-        boolean hasRecurrence = false;
-        if (contract.getProposal() != null && contract.getProposal().getEnterprise() != null) {
-            java.util.Set<OfferedService> services = contract.getProposal().getEnterprise().getServices();
-            if (services != null) {
-                for (OfferedService srv : services) {
-                    if (srv.getName().toUpperCase().contains("CFO") || srv.getName().toUpperCase().contains("BPO_FINANCEIRO")) {
-                        hasRecurrence = true;
-                        break;
-                    }
-                }
-            }
+        if (hasMonthlyRecurrence(contract)) {
+            Long proposalId = contract.getProposal().getId();
+            documentRequirementService.resetRequirementsForNextCycle(proposalId, LocalDate.now().plusMonths(1));
+            notifyContractTeam(contract, "RECURRENCE_DOCUMENTS_REQUESTED",
+                    "A apresentação do contrato " + contract.getId()
+                            + " foi concluída. A documentação recorrente foi solicitada para o próximo ciclo.");
         }
-        
-        if (hasRecurrence) {
-            System.out.println("MOCK: Gateway de Recorrência (CFO/FS) acionado! Regerando DocumentRequirements para o próximo ciclo...");
-            // TODO: call DocumentRequirementService.createRequirements() for next month.
-        } else {
-            System.out.println("MOCK: Fim do processo. Sem recorrência para o contrato " + contract.getId());
+    }
+
+    private List<Long> resolvePresentationParticipants(Contract contract) {
+        return java.util.stream.Stream.of(
+                        contract.getResponsibleAnalyst(),
+                        contract.getProposal() != null ? contract.getProposal().getResponsibleAnalyst() : null,
+                        contract.getProposal() != null ? contract.getProposal().getUser() : null)
+                .filter(Objects::nonNull)
+                .map(User::getId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+    }
+
+    private boolean hasMonthlyRecurrence(Contract contract) {
+        if (contract.getProposal() == null || contract.getProposal().getEnterprise() == null) {
+            return false;
         }
+
+        java.util.Set<OfferedService> services = contract.getProposal().getEnterprise().getServices();
+        if (services == null || services.isEmpty()) {
+            return false;
+        }
+
+        return services.stream()
+                .map(OfferedService::getName)
+                .filter(name -> name != null)
+                .map(this::normalizeServiceName)
+                .anyMatch(name -> name.contains("CFO") || name.contains("BPO"));
+    }
+
+    private String normalizeServiceName(String serviceName) {
+        return serviceName.toUpperCase(Locale.ROOT)
+                .replace('-', '_')
+                .replace(' ', '_');
+    }
+
+    private void notifyContractTeam(Contract contract, String type, String message) {
+        resolvePresentationParticipants(contract).forEach(userId ->
+                notificationService.save(NotificationCreateRequest.builder()
+                        .userId(userId)
+                        .type(type)
+                        .message(message)
+                        .build()));
     }
 
     private Report findReportOrThrow(Long id) {

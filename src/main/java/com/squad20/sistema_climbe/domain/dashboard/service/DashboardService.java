@@ -1,5 +1,6 @@
 package com.squad20.sistema_climbe.domain.dashboard.service;
 
+import com.squad20.sistema_climbe.domain.contract.entity.Contract;
 import com.squad20.sistema_climbe.domain.contract.repository.ContractRepository;
 import com.squad20.sistema_climbe.domain.dashboard.dto.DashboardStatsDTO;
 import com.squad20.sistema_climbe.domain.enterprise.repository.EnterpriseRepository;
@@ -10,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
@@ -28,17 +31,26 @@ public class DashboardService {
     @Transactional(readOnly = true)
     public DashboardStatsDTO getStats() {
         List<Proposal> proposals = proposalRepository.findAll();
+        List<Contract> contracts = contractRepository.findAll();
         LocalDate firstMonth = LocalDate.now().withDayOfMonth(1).minusMonths(5);
         DateTimeFormatter monthFormat = DateTimeFormatter.ofPattern("MMM", Locale.forLanguageTag("pt-BR"));
 
-        List<DashboardStatsDTO.ValueItem> monthlyProposals = IntStream.range(0, 6)
+        BigDecimal totalRevenue = contracts.stream()
+                .map(Contract::getTotalValue)
+                .filter(value -> value != null)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        List<DashboardStatsDTO.ValueItem> monthlyRevenue = IntStream.range(0, 6)
                 .mapToObj(offset -> firstMonth.plusMonths(offset))
                 .map(month -> new DashboardStatsDTO.ValueItem(
                         capitalize(month.format(monthFormat)),
-                        proposals.stream()
-                                .filter(proposal -> proposal.getCreatedAt() != null)
-                                .filter(proposal -> proposal.getCreatedAt().toLocalDate().withDayOfMonth(1).equals(month))
-                                .count(),
+                        contracts.stream()
+                                .filter(contract -> contract.getStartDate() != null)
+                                .filter(contract -> contract.getTotalValue() != null)
+                                .filter(contract -> contract.getStartDate().withDayOfMonth(1).equals(month))
+                                .map(Contract::getTotalValue)
+                                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                                .longValue(),
                         "#79C6C0"))
                 .toList();
 
@@ -63,13 +75,17 @@ public class DashboardService {
 
         return DashboardStatsDTO.builder()
                 .totalProposals(proposals.size())
-                .totalContracts(contractRepository.count())
+                .totalContracts(contracts.size())
                 .totalClients(enterpriseRepository.count())
-                .totalRevenue("R$ 0,00")
-                .monthlyRevenue(monthlyProposals)
+                .totalRevenue(formatCurrency(totalRevenue))
+                .monthlyRevenue(monthlyRevenue)
                 .proposalStatusDistribution(statusDistribution)
                 .recentActivities(activities)
                 .build();
+    }
+
+    private String formatCurrency(BigDecimal value) {
+        return NumberFormat.getCurrencyInstance(Locale.forLanguageTag("pt-BR")).format(value);
     }
 
     private String statusColor(ProposalStatus status) {

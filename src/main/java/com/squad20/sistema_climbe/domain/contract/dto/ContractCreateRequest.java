@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Getter
@@ -26,4 +27,6 @@ public class ContractCreateRequest {
 
     @Size(max = 50)
     private String status;
+
+    private BigDecimal totalValue;
 }

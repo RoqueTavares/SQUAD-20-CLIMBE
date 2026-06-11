@@ -3,6 +3,7 @@ package com.squad20.sistema_climbe.domain.contract.dto;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Getter
@@ -22,4 +23,6 @@ public class ContractDTO {
 
     @Size(max = 50)
     private String status;
+
+    private BigDecimal totalValue;
 }

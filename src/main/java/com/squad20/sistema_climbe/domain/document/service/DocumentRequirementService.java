@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -78,6 +79,37 @@ public class DocumentRequirementService {
         return documentRequirementRepository.findByProposal_Id(proposalId).stream()
                 .map(documentRequirementMapper::toDTO)
                 .toList();
+    }
+
+    @Transactional
+    public List<DocumentRequirementDTO> resetRequirementsForNextCycle(Long proposalId, LocalDate deadline) {
+        Proposal proposal = findProposalOrThrow(proposalId);
+        List<DocumentRequirement> requirements = documentRequirementRepository.findByProposal_Id(proposalId);
+
+        if (requirements.isEmpty()) {
+            return createRequirements(proposalId, DocumentRequirementCreateRequest.builder()
+                    .deadline(deadline)
+                    .build());
+        }
+
+        requirements.forEach(requirement -> {
+            requirement.setStatus(DocumentRequirementStatus.PENDING);
+            requirement.setDeadline(deadline);
+            requirement.setDocument(null);
+            requirement.setRejectionReason(null);
+            requirement.setValidatedBy(null);
+            requirement.setValidatedAt(null);
+        });
+
+        List<DocumentRequirementDTO> result = documentRequirementRepository.saveAll(requirements).stream()
+                .map(documentRequirementMapper::toDTO)
+                .toList();
+
+        notifyEnterpriseDocumentsRequested(proposal, requirements.stream()
+                .map(DocumentRequirement::getDocumentType)
+                .toList());
+
+        return result;
     }
 
     @Transactional
