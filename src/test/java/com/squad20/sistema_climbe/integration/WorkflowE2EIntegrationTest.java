@@ -64,6 +64,7 @@ class WorkflowE2EIntegrationTest {
     @Autowired private ContractService contractService;
     @Autowired private DocumentRequirementService documentRequirementService;
     @Autowired private DocumentRequirementRepository documentRequirementRepository;
+    @Autowired private com.squad20.sistema_climbe.domain.document.repository.DocumentRepository documentRepository;
     @Autowired private ReportService reportService;
     @Autowired private ReportRepository reportRepository;
     @Autowired private UserRepository userRepository;
@@ -150,7 +151,16 @@ class WorkflowE2EIntegrationTest {
         List<DocumentRequirement> docs = documentRequirementRepository.findByProposal_Id(proposalId);
         assertFalse(docs.isEmpty(), "Deveria ter gerado requisitos de documento");
 
+        Enterprise enterprise = enterpriseRepository.findById(enterpriseId).orElseThrow();
         for (DocumentRequirement doc : docs) {
+            com.squad20.sistema_climbe.domain.document.entity.Document d = new com.squad20.sistema_climbe.domain.document.entity.Document();
+            d.setDocumentType(doc.getDocumentType().name());
+            d.setEnterprise(enterprise);
+            d = documentRepository.save(d);
+            
+            doc.setDocument(d);
+            documentRequirementRepository.save(doc);
+
             documentRequirementService.patchRequirement(doc.getId(), DocumentRequirementPatchRequest.builder()
                     .status(DocumentRequirementStatus.APPROVED)
                     .build());

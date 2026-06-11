@@ -18,7 +18,7 @@ public interface MeetingRepository extends JpaRepository<Meeting, Long> {
     List<Meeting> findMeetingsByDateAndParticipants(@Param("date") LocalDate date, @Param("participantIds") java.util.Collection<Long> participantIds);
 
     @Query("SELECT m FROM Meeting m WHERE m.date = :date AND m.inPerson = true AND m.deletedAt IS NULL")
-    List<Meeting> findInPersonMeetingsByDate(@Param("date") LocalDate date);
+    List<Meeting> findMeetingsByDateAndInPersonTrue(@Param("date") LocalDate date);
 
     @Modifying
     @Query("UPDATE Meeting m SET m.deletedAt = :deletedAt WHERE m.enterprise.id = :enterpriseId AND m.deletedAt IS NULL")

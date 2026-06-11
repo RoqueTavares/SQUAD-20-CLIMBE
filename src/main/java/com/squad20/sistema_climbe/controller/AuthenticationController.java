@@ -97,4 +97,12 @@ public class AuthenticationController {
         return ResponseEntity.ok(user);
     }
 
+    @Operation(summary = "Completar Perfil", description = "Endpoint para usuários do Google preencherem o CPF e Telefone pendentes")
+    @org.springframework.web.bind.annotation.PatchMapping("/complete-profile")
+    public ResponseEntity<UserDTO> completeProfile(
+            @Valid @RequestBody com.squad20.sistema_climbe.domain.user.dto.UserProfileCompletionRequest request
+    ) {
+        UserDTO updatedUser = service.completeProfile(request);
+        return ResponseEntity.ok(updatedUser);
+    }
 }

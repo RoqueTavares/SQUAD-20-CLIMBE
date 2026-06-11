@@ -58,6 +58,7 @@ class DocumentRequirementServiceTest {
         documentRequirement.setProposal(proposal);
         documentRequirement.setStatus(DocumentRequirementStatus.PENDING);
         documentRequirement.setDocumentType(DocumentType.CNPJ);
+        documentRequirement.setDocument(new com.squad20.sistema_climbe.domain.document.entity.Document());
     }
 
     @Test

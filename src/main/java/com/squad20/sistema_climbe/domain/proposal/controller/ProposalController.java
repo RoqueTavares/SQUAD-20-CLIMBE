@@ -14,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 
@@ -53,12 +54,14 @@ public class ProposalController {
     }
 
     @Operation(summary = "Criar proposta", description = "Cadastra uma nova proposta")
+    @PreAuthorize("hasRole('CMO') or hasRole('CEO')")
     @PostMapping
     public ResponseEntity<ProposalDTO> save(@Valid @RequestBody ProposalCreateRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(proposalService.save(request));
     }
 
     @Operation(summary = "Atualizar proposta", description = "Atualiza uma proposta existente (parcial)")
+    @PreAuthorize("hasRole('CMO') or hasRole('CEO')")
     @PatchMapping("/{id}")
     public ResponseEntity<ProposalDTO> update(
             @Parameter(description = "ID da proposta") @PathVariable Long id,
@@ -67,6 +70,7 @@ public class ProposalController {
     }
 
     @Operation(summary = "Excluir proposta", description = "Remove uma proposta pelo ID")
+    @PreAuthorize("hasRole('CMO') or hasRole('CEO')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(
             @Parameter(description = "ID da proposta") @PathVariable Long id) {

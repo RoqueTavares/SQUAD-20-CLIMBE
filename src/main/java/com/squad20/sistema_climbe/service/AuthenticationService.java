@@ -107,4 +107,40 @@ public class AuthenticationService {
                 .map(userMapper::toDTO)
                 .orElse(null);
     }
+
+    public UserDTO completeProfile(com.squad20.sistema_climbe.domain.user.dto.UserProfileCompletionRequest request) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() || authentication instanceof AnonymousAuthenticationToken) {
+            throw new org.springframework.security.authentication.AuthenticationCredentialsNotFoundException("Usuário não autenticado");
+        }
+
+        String email = authentication.getName();
+        User user = repository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado."));
+
+        if (!"PENDENTE".equals(user.getStatus())) {
+            throw new BadRequestException("O perfil deste usuário já não está mais pendente.");
+        }
+
+        if (repository.findByCpf(request.getCpf()).filter(u -> !u.getId().equals(user.getId())).isPresent()) {
+            throw new ConflictException("Este CPF já está sendo utilizado por outro usuário.");
+        }
+
+        user.setCpf(request.getCpf());
+        user.setPhone(request.getPhone());
+        user.setStatus("AGUARDANDO_APROVACAO");
+        
+        final User savedUser = repository.save(user);
+
+        // Notificar administradores
+        repository.findByRole(Role.CEO).forEach(ceo -> {
+            notificationService.save(NotificationCreateRequest.builder()
+                    .userId(ceo.getId())
+                    .type("NEW_USER_PENDING")
+                    .message("O usuário " + savedUser.getFullName() + " completou o perfil e aguarda atribuição de cargo.")
+                    .build());
+        });
+
+        return userMapper.toDTO(savedUser);
+    }
 }

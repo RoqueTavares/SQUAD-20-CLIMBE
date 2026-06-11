@@ -210,7 +210,7 @@ public class MeetingService {
         }
 
         java.time.LocalTime newEnd = endTime != null ? endTime : startTime.plusHours(1);
-        for (Meeting meeting : meetingRepository.findInPersonMeetingsByDate(date)) {
+        for (Meeting meeting : meetingRepository.findMeetingsByDateAndInPersonTrue(date)) {
             if (excludeMeetingId != null && meeting.getId().equals(excludeMeetingId)) {
                 continue;
             }
