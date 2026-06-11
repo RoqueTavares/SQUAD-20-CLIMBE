@@ -13,7 +13,7 @@ import java.io.InputStream;
 @Configuration
 public class GoogleCloudStorageConfig {
 
-    @Value("${gcp.credentials.file.path}")
+    @Value("${gcp.credentials.file.path:classpath:gcp-credentials.json}")
     private String credentialsFilePath;
 
     @Bean

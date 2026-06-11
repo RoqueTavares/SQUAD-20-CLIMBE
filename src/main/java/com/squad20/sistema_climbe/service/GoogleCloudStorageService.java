@@ -18,7 +18,7 @@ public class GoogleCloudStorageService {
 
     private final Storage storage;
 
-    @Value("${gcp.bucket.name}")
+    @Value("${gcp.bucket.name:}")
     private String bucketName;
 
     public GoogleCloudStorageService(Storage storage) {
@@ -30,6 +30,7 @@ public class GoogleCloudStorageService {
      * Retorna o Caminho físico (path) salvo no bucket (Esse nome que vc guarda no banco de dados).
      */
     public String uploadPrivateFile(MultipartFile file, String folderName) throws IOException {
+        validateBucketConfigured();
         String originalName = file.getOriginalFilename();
         // Gerar um UUID pra evitar sobrepor arquivos que o dono salva com mesmo nome.
         String uniqueFileName = folderName + "/" + UUID.randomUUID() + "-" + originalName;
@@ -46,6 +47,7 @@ public class GoogleCloudStorageService {
     }
 
     public String uploadPrivateFileBytes(byte[] bytes, String fileName, String folderName, String contentType) {
+        validateBucketConfigured();
         String uniqueFileName = folderName + "/" + UUID.randomUUID() + "-" + fileName;
 
         BlobId blobId = BlobId.of(bucketName, uniqueFileName);
@@ -65,6 +67,7 @@ public class GoogleCloudStorageService {
      * Qualquer pessoa que tentar usar o link depois de 30 mins vai levar erro de 'AccessDenied'.
      */
     public String generateSignedUrl(String pathNoBucket) {
+        validateBucketConfigured();
         BlobInfo blobInfo = BlobInfo.newBuilder(BlobId.of(bucketName, pathNoBucket)).build();
 
         URL url = storage.signUrl(
@@ -82,6 +85,7 @@ public class GoogleCloudStorageService {
      * Chame esse método caso um usuário apague seu perfil ou documento do seu Banco pra não pagar infra inútil.
      */
     public boolean deleteFile(String pathNoBucket) {
+        validateBucketConfigured();
         BlobId blobId = BlobId.of(bucketName, pathNoBucket);
         return storage.delete(blobId);
     }
@@ -90,11 +94,18 @@ public class GoogleCloudStorageService {
      * Lista todos os nomes dos objetos presentes no bucket.
      */
     public java.util.List<String> listObjects() {
+        validateBucketConfigured();
         com.google.api.gax.paging.Page<com.google.cloud.storage.Blob> blobs = storage.list(bucketName);
         java.util.List<String> fileNames = new java.util.ArrayList<>();
         for (com.google.cloud.storage.Blob blob : blobs.iterateAll()) {
             fileNames.add(blob.getName());
         }
         return fileNames;
+    }
+
+    private void validateBucketConfigured() {
+        if (bucketName == null || bucketName.isBlank()) {
+            throw new IllegalStateException("GCP bucket name must be configured to use Google Cloud Storage operations.");
+        }
     }
 }
