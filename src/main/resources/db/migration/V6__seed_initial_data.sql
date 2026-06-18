@@ -1,5 +1,5 @@
 -- V6: Seed Initial Data
--- Hash padrão para a senha '123456': $2a$10$EblZqNptyYvcLm/VwDCVAuAw5QkpfL/0B/hW.B28Y4yN2Vb1NnKvy
+-- Hash padrão para a senha '123456': $2y$10$juuh5YjqN6O5IA5Tldwe.eqvjRA6LBQ.aNq1kIgoITdI12I6t4OX2
 
 -- Atualiza a constraint de cargo para aceitar as novas roles antes de inserir
 ALTER TABLE usuarios DROP CONSTRAINT IF EXISTS usuarios_cargo_check;
@@ -11,11 +11,11 @@ ALTER TABLE usuarios ADD CONSTRAINT usuarios_cargo_check CHECK (cargo::text = AN
 ]));
 
 -- 1. Inserir Usuários (IDs 1, 2, 3)
-INSERT INTO usuarios (id_usuario, cpf, email, nome_completo, cargo, senha_hash, created_at)
-VALUES 
-(1, '11122233344', 'ceo@climbe.com.br', 'CEO Sistema Climbe', 'CEO', '$2a$10$EblZqNptyYvcLm/VwDCVAuAw5QkpfL/0B/hW.B28Y4yN2Vb1NnKvy', NOW()),
-(2, '55566677788', 'analista@climbe.com.br', 'Analista Sênior', 'ANALISTA_SENIOR', '$2a$10$EblZqNptyYvcLm/VwDCVAuAw5QkpfL/0B/hW.B28Y4yN2Vb1NnKvy', NOW()),
-(3, '99988877766', 'bpo@climbe.com.br', 'Analista de BPO', 'ANALISTA_BPO_FINANCEIRO', '$2a$10$EblZqNptyYvcLm/VwDCVAuAw5QkpfL/0B/hW.B28Y4yN2Vb1NnKvy', NOW())
+INSERT INTO usuarios (id_usuario, cpf, email, nome_completo, cargo, senha_hash, situacao, created_at)
+VALUES
+(1, '11122233344', 'ceo@climbe.com.br', 'CEO Sistema Climbe', 'CEO', '$2y$10$juuh5YjqN6O5IA5Tldwe.eqvjRA6LBQ.aNq1kIgoITdI12I6t4OX2', 'ATIVO', NOW()),
+(2, '55566677788', 'analista@climbe.com.br', 'Analista Sênior', 'ANALISTA_SENIOR', '$2y$10$juuh5YjqN6O5IA5Tldwe.eqvjRA6LBQ.aNq1kIgoITdI12I6t4OX2', 'ATIVO', NOW()),
+(3, '99988877766', 'bpo@climbe.com.br', 'Analista de BPO', 'ANALISTA_BPO_FINANCEIRO', '$2y$10$juuh5YjqN6O5IA5Tldwe.eqvjRA6LBQ.aNq1kIgoITdI12I6t4OX2', 'ATIVO', NOW())
 ON CONFLICT DO NOTHING;
 
 SELECT setval('usuarios_id_usuario_seq', 3);
