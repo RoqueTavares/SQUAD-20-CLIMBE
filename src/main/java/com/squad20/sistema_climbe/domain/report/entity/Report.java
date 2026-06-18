@@ -33,4 +33,12 @@ public class Report extends BaseEntity {
 
     @Column(name = "data_envio")
     private LocalDateTime sentAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", length = 50)
+    private ReportStatus status;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "revisor_id")
+    private com.squad20.sistema_climbe.domain.user.entity.User reviewer;
 }

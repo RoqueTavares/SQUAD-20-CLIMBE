@@ -30,7 +30,7 @@ public class Enterprise extends BaseEntity {
     @Column(name = "nome_fantasia")
     private String tradeName;
 
-    // unique=true removido: substituído por partial index no banco (ver soft-delete-indexes.sql)
+    // unique=true removido: substituído por partial index no banco (ver V2__soft_delete_indexes.sql)
     @Column(nullable = false)
     private String cnpj;
 
@@ -40,7 +40,7 @@ public class Enterprise extends BaseEntity {
     @Column(name = "telefone")
     private String phone;
 
-    // unique=true removido: substituído por partial index no banco (ver soft-delete-indexes.sql)
+    // unique=true removido: substituído por partial index no banco (ver V2__soft_delete_indexes.sql)
     @Column(nullable = false)
     private String email;
 

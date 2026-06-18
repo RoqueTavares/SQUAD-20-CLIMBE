@@ -45,6 +45,19 @@ public class GoogleCloudStorageService {
         return uniqueFileName;
     }
 
+    public String uploadPrivateFileBytes(byte[] bytes, String fileName, String folderName, String contentType) {
+        String uniqueFileName = folderName + "/" + UUID.randomUUID() + "-" + fileName;
+
+        BlobId blobId = BlobId.of(bucketName, uniqueFileName);
+        BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
+                .setContentType(contentType)
+                .build();
+
+        storage.create(blobInfo, bytes);
+
+        return uniqueFileName;
+    }
+
     /**
      * Gera uma "Signed URL" (URL Assinada).
      * Esse é o segredo de arquivos privados: É um link válido por apenas 30 minutos
@@ -71,5 +84,17 @@ public class GoogleCloudStorageService {
     public boolean deleteFile(String pathNoBucket) {
         BlobId blobId = BlobId.of(bucketName, pathNoBucket);
         return storage.delete(blobId);
+    }
+
+    /**
+     * Lista todos os nomes dos objetos presentes no bucket.
+     */
+    public java.util.List<String> listObjects() {
+        com.google.api.gax.paging.Page<com.google.cloud.storage.Blob> blobs = storage.list(bucketName);
+        java.util.List<String> fileNames = new java.util.ArrayList<>();
+        for (com.google.cloud.storage.Blob blob : blobs.iterateAll()) {
+            fileNames.add(blob.getName());
+        }
+        return fileNames;
     }
 }

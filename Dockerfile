@@ -22,6 +22,9 @@ WORKDIR /app
 # Copiar o JAR gerado do estágio de build
 COPY --from=builder /app/build/libs/*.jar /app/app.jar
 
+RUN groupadd --system app && useradd --system --gid app app
+USER app
+
 EXPOSE 8080
 
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]

@@ -66,5 +66,15 @@ public class ContractController {
         contractService.delete(id);
         return ResponseEntity.noContent().build();
     }
+
+    @Operation(summary = "Alocar Equipe", description = "Aloca uma equipe no contrato e dispara a criação de ambiente no Google Drive/Sheets")
+    @PostMapping("/{id}/team")
+    public ResponseEntity<Void> assignTeam(
+            @Parameter(description = "ID do contrato") @PathVariable Long id,
+            @Parameter(description = "Lista de IDs dos usuários") @RequestParam List<Long> userIds,
+            @Parameter(description = "Papel na equipe") @RequestParam String roleInTeam) {
+        contractService.assignTeam(id, userIds, roleInTeam);
+        return ResponseEntity.ok().build();
+    }
 }
 

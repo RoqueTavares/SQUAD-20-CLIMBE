@@ -39,7 +39,10 @@ import java.util.List;
 public class ProposalService {
 
     private static final EnumSet<Role> ANALYST_ROLES = EnumSet.of(
-            Role.ANALISTA_VALORES_IMOBILIARIOS,
+            Role.ANALISTA_VI_TRAINEE,
+            Role.ANALISTA_VI_JUNIOR,
+            Role.ANALISTA_VI_PLENO,
+            Role.ANALISTA_VI_SENIOR,
             Role.ANALISTA_BPO_FINANCEIRO);
 
     private final ProposalRepository proposalRepository;
@@ -192,6 +195,9 @@ public class ProposalService {
             case PENDING_ADJUSTMENTS -> newStatus == ProposalStatus.IN_TRIAGE;
             case COMMERCIAL_PROPOSAL -> newStatus == ProposalStatus.COMMERCIAL_PROPOSAL_APPROVED
                     || newStatus == ProposalStatus.COMMERCIAL_PROPOSAL_REJECTED;
+            case COMMERCIAL_PROPOSAL_REJECTED -> newStatus == ProposalStatus.RECEIVED 
+                    || newStatus == ProposalStatus.IN_TRIAGE 
+                    || newStatus == ProposalStatus.COMMERCIAL_PROPOSAL;
             default -> false;
         };
 

@@ -32,4 +32,10 @@ public class GcpTestController {
             "\n\nLink temporário para clicar e ver o arquivo na nuvem:\n" + urlVisualizacao
         );
     }
+
+    @Operation(summary = "Listar objetos no Bucket", description = "Retorna a lista de todos os objetos que estão atualmente presentes no seu Bucket do Google Cloud Storage.")
+    @GetMapping("/list")
+    public ResponseEntity<java.util.List<String>> listObjects() {
+        return ResponseEntity.ok(storageService.listObjects());
+    }
 }

@@ -21,7 +21,7 @@ public class OfferedService extends BaseEntity {
     @Column(name = "id_servico")
     private Long id;
 
-    // unique=true removido: substituído por partial index no banco (ver soft-delete-indexes.sql)
+    // unique=true removido: substituído por partial index no banco (ver V2__soft_delete_indexes.sql)
     @Column(name = "nome", nullable = false, length = 255)
     private String name;
 }

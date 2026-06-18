@@ -69,4 +69,8 @@ application.properties
 gcp-credentials.json
 
 # Documentação interna de trabalho (não versionada)
-docs/
+docs/*
+!docs/DEPLOY-CLOUD-RUN.md
+!docs/INFRA-HORIZONTAL-SCALE.md
+
+node_modules

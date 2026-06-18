@@ -16,9 +16,12 @@ import com.squad20.sistema_climbe.domain.user.repository.UserRepository;
 import com.squad20.sistema_climbe.exception.BadRequestException;
 import com.squad20.sistema_climbe.exception.ConflictException;
 import com.squad20.sistema_climbe.exception.ResourceNotFoundException;
+import com.squad20.sistema_climbe.domain.notification.dto.NotificationCreateRequest;
+import com.squad20.sistema_climbe.domain.notification.service.NotificationService;
 import com.squad20.sistema_climbe.messaging.EmailMessage;
 import com.squad20.sistema_climbe.messaging.EmailPublisher;
 import com.squad20.sistema_climbe.messaging.EmailRoutingKeys;
+import com.squad20.sistema_climbe.domain.user.entity.Role;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -41,6 +44,7 @@ public class DocumentRequirementService {
     private final UserRepository userRepository;
     private final DocumentRequirementMapper documentRequirementMapper;
     private final EmailPublisher emailPublisher;
+    private final NotificationService notificationService;
 
     @Transactional
     public List<DocumentRequirementDTO> createRequirements(Long proposalId, DocumentRequirementCreateRequest request) {
@@ -79,7 +83,7 @@ public class DocumentRequirementService {
     @Transactional
     public DocumentRequirementDTO patchRequirement(Long id, DocumentRequirementPatchRequest patch) {
         DocumentRequirement requirement = documentRequirementRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Requisito documental nao encontrado com id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Requisito documental não encontrado com id: " + id));
 
         if (patch.getDeadline() != null) {
             requirement.setDeadline(patch.getDeadline());
@@ -87,7 +91,7 @@ public class DocumentRequirementService {
 
         if (patch.getValidatedById() != null) {
             User validatedBy = userRepository.findById(patch.getValidatedById())
-                    .orElseThrow(() -> new ResourceNotFoundException("Usuario nao encontrado com id: " + patch.getValidatedById()));
+                    .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado com id: " + patch.getValidatedById()));
             requirement.setValidatedBy(validatedBy);
         }
 
@@ -99,11 +103,14 @@ public class DocumentRequirementService {
             if (patch.getStatus() == DocumentRequirementStatus.NON_COMPLIANT) {
                 String reason = patch.getRejectionReason();
                 if (reason == null || reason.isBlank()) {
-                    throw new BadRequestException("rejectionReason e obrigatorio quando status for NON_COMPLIANT");
+                    throw new BadRequestException("rejectionReason é obrigatório quando status for NON_COMPLIANT");
                 }
                 requirement.setRejectionReason(reason);
                 requirement.setValidatedAt(LocalDateTime.now());
             } else if (patch.getStatus() == DocumentRequirementStatus.APPROVED) {
+                if (requirement.getDocument() == null) {
+                    throw new BadRequestException("Não é possível aprovar um requisito documental sem um arquivo anexado.");
+                }
                 requirement.setRejectionReason(null);
                 requirement.setValidatedAt(LocalDateTime.now());
             } else if (patch.getRejectionReason() != null) {
@@ -121,6 +128,9 @@ public class DocumentRequirementService {
                 notifyEnterpriseDocumentNonCompliant(saved);
             } else if (patch.getStatus() == DocumentRequirementStatus.APPROVED) {
                 notifyEnterpriseDocumentApproved(saved);
+                if (checkIfAllDocumentsApproved(saved.getProposal().getId())) {
+                    notifySeniorAnalystsForDeadline(saved.getProposal());
+                }
             }
         }
 
@@ -224,11 +234,26 @@ public class DocumentRequirementService {
         );
     }
 
-    
+    private boolean checkIfAllDocumentsApproved(Long proposalId) {
+        List<DocumentRequirement> requirements = documentRequirementRepository.findByProposal_Id(proposalId);
+        if (requirements.isEmpty()) return false;
+        return requirements.stream().allMatch(req -> req.getStatus() == DocumentRequirementStatus.APPROVED);
+    }
+
+    private void notifySeniorAnalystsForDeadline(Proposal proposal) {
+        List<User> seniors = userRepository.findByRole(Role.ANALISTA_SENIOR);
+        for (User senior : seniors) {
+            notificationService.save(NotificationCreateRequest.builder()
+                    .userId(senior.getId())
+                    .type("ALL_DOCUMENTS_APPROVED")
+                    .message("Todos os documentos da proposta " + proposal.getId() + " foram aprovados. Por favor, defina o prazo de execução no contrato.")
+                    .build());
+        }
+    }
 
     private Proposal findProposalOrThrow(Long proposalId) {
         return proposalRepository.findById(proposalId)
-                .orElseThrow(() -> new ResourceNotFoundException("Proposta nao encontrada com id: " + proposalId));
+                .orElseThrow(() -> new ResourceNotFoundException("Proposta não encontrada com id: " + proposalId));
     }
 
     private List<DocumentType> normalizeTypes(List<DocumentType> requestedTypes) {
@@ -239,10 +264,10 @@ public class DocumentRequirementService {
         Set<DocumentType> seen = new HashSet<>();
         for (DocumentType type : requestedTypes) {
             if (type == null) {
-                throw new BadRequestException("documentTypes nao pode conter itens nulos");
+                throw new BadRequestException("documentTypes não pode conter itens nulos");
             }
             if (!seen.add(type)) {
-                throw new BadRequestException("documentTypes nao pode conter tipos repetidos no payload");
+                throw new BadRequestException("documentTypes não pode conter tipos repetidos no payload");
             }
         }
 
@@ -252,7 +277,7 @@ public class DocumentRequirementService {
     private void validateNoDuplicateInProposal(Long proposalId, List<DocumentType> types) {
         for (DocumentType type : types) {
             if (documentRequirementRepository.existsByProposal_IdAndDocumentType(proposalId, type)) {
-                throw new ConflictException("Ja existe requisito documental ativo para proposta "
+                throw new ConflictException("Já existe requisito documental ativo para proposta "
                         + proposalId + " e tipo " + type);
             }
         }

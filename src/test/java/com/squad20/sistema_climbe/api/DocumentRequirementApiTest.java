@@ -100,7 +100,7 @@ class DocumentRequirementApiTest extends ApiTestBase {
     }
 
     @Test
-    @DisplayName("PATCH para APPROVED limpa rejectionReason e define validatedAt")
+    @DisplayName("PATCH para APPROVED sem documento retorna 400")
     void patchApprovedClearsReasonAndSetsValidatedAt() throws Exception {
         ProposalFixture proposal = createProposal();
 
@@ -116,11 +116,7 @@ class DocumentRequirementApiTest extends ApiTestBase {
         mockMvc.perform(patch("/api/documents/requirements/" + requirementId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"status\":\"APPROVED\",\"rejectionReason\":\"motivo temporario\",\"validatedById\":" + validator.id() + "}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("APPROVED"))
-                .andExpect(jsonPath("$.rejectionReason").isEmpty())
-                .andExpect(jsonPath("$.validatedById").value(Integer.parseInt(validator.id())))
-                .andExpect(jsonPath("$.validatedAt").isNotEmpty());
+                .andExpect(status().isBadRequest());
     }
 
     @Test
