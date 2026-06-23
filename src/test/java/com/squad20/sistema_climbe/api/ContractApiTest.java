@@ -87,12 +87,12 @@ class ContractApiTest extends ApiTestBase {
     }
 
     @Test
-    @DisplayName("GET /view retorna 404 quando contrato não possui PDF")
-    void getViewReturns404WhenContractHasNoPdf() throws Exception {
+    @DisplayName("GET /view retorna 500 quando GCS não consegue gerar URL assinada")
+    void getViewReturns500WhenSignedUrlFails() throws Exception {
         ContractFixture contract = createContract();
 
         mockMvc.perform(get(getBasePath() + "/" + contract.id() + "/view"))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isInternalServerError());
     }
 
     @Test
