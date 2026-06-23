@@ -45,6 +45,13 @@ public class ContractController {
         return ResponseEntity.ok(contractService.findById(id));
     }
 
+    @Operation(summary = "Visualizar contrato", description = "Gera um link temporário seguro para visualização do PDF do contrato")
+    @GetMapping("/{id}/view")
+    public ResponseEntity<String> getViewUrl(
+            @Parameter(description = "ID do contrato") @PathVariable Long id) {
+        return ResponseEntity.ok(contractService.generateViewUrl(id));
+    }
+
     @Operation(summary = "Criar contrato", description = "Cadastra um novo contrato")
     @PostMapping
     public ResponseEntity<ContractDTO> save(@Valid @RequestBody ContractCreateRequest request) {

@@ -76,6 +76,23 @@ public class ContractService {
         return contractMapper.toDTO(contract);
     }
 
+    @Transactional(readOnly = true)
+    public String generateViewUrl(Long id) {
+        Contract contract = findContractOrThrow(id);
+        if (contract.getPdfUrl() == null || contract.getPdfUrl().isEmpty()) {
+            throw new ResourceNotFoundException("Este contrato não possui um PDF anexado.");
+        }
+
+        try {
+            if (contract.getPdfUrl().startsWith("http")) {
+                return contract.getPdfUrl();
+            }
+            return googleCloudStorageService.generateSignedUrl(contract.getPdfUrl());
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao gerar link seguro de visualização", e);
+        }
+    }
+
     @Transactional
     public ContractDTO save(ContractCreateRequest request) {
         Proposal proposal = findProposalOrThrow(request.getProposalId());
