@@ -45,6 +45,8 @@ services:
       - rabbitmq
     env_file:
       - .env
+    volumes:
+      - ./src/main/resources/gcp-credentials.json:/app/gcp-credentials.json:ro
 
     dns:
       - 8.8.8.8
@@ -69,6 +71,7 @@ services:
       - APP_WEBSOCKET_BROKER_RELAY_SYSTEM_LOGIN=${APP_WEBSOCKET_BROKER_RELAY_SYSTEM_LOGIN:-admin}
       - APP_WEBSOCKET_BROKER_RELAY_SYSTEM_PASSCODE=${APP_WEBSOCKET_BROKER_RELAY_SYSTEM_PASSCODE:-admin}
       - APP_WEBSOCKET_BROKER_RELAY_VIRTUAL_HOST=${APP_WEBSOCKET_BROKER_RELAY_VIRTUAL_HOST:-/}
+      - GCP_CREDENTIALS_FILE_PATH=/app/gcp-credentials.json
       - APP_WEBSOCKET_BROKER_RELAY_USER_DESTINATION_BROADCAST=${APP_WEBSOCKET_BROKER_RELAY_USER_DESTINATION_BROADCAST:-/topic/unresolved-user-destinations}
       - APP_WEBSOCKET_BROKER_RELAY_USER_REGISTRY_BROADCAST=${APP_WEBSOCKET_BROKER_RELAY_USER_REGISTRY_BROADCAST:-/topic/simp-user-registry}
     volumes:
