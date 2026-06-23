@@ -1,0 +1,52 @@
+name: Deploy to Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker southamerica-east1-docker.pkg.dev --quiet
+
+      - name: Build and push image via Cloud Build
+        run: |
+          gcloud builds submit \
+            --tag southamerica-east1-docker.pkg.dev/booming-being-497117-m3/climbe/climbe-api:latest \
+            --project booming-being-497117-m3 \
+            --region southamerica-east1
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy climbe-api \
+            --image southamerica-east1-docker.pkg.dev/booming-being-497117-m3/climbe/climbe-api:latest \
+            --region southamerica-east1 \
+            --project booming-being-497117-m3
+
+      - name: Verify deployment
+        run: |
+          URL="https://climbe-api-pionu2yewa-rj.a.run.app"
+          echo "Aguardando API inicializar..."
+          sleep 30
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL/actuator/health/readiness")
+          if [ "$STATUS" != "200" ]; then
+            echo "FALHA: readiness retornou HTTP $STATUS"
+            exit 1
+          fi
+          echo "Deploy validado — readiness UP"
