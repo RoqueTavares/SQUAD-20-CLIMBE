@@ -30,7 +30,8 @@ jobs:
           gcloud builds submit \
             --tag southamerica-east1-docker.pkg.dev/booming-being-497117-m3/climbe/climbe-api:latest \
             --project booming-being-497117-m3 \
-            --region southamerica-east1
+            --region southamerica-east1 \
+            --suppress-logs
 
       - name: Deploy to Cloud Run
         run: |
