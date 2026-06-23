@@ -71,7 +71,8 @@ services:
       - APP_WEBSOCKET_BROKER_RELAY_VIRTUAL_HOST=${APP_WEBSOCKET_BROKER_RELAY_VIRTUAL_HOST:-/}
       - APP_WEBSOCKET_BROKER_RELAY_USER_DESTINATION_BROADCAST=${APP_WEBSOCKET_BROKER_RELAY_USER_DESTINATION_BROADCAST:-/topic/unresolved-user-destinations}
       - APP_WEBSOCKET_BROKER_RELAY_USER_REGISTRY_BROADCAST=${APP_WEBSOCKET_BROKER_RELAY_USER_REGISTRY_BROADCAST:-/topic/simp-user-registry}
-
+    volumes:
+      - ${GCP_CREDENTIALS_HOST_PATH:-./src/main/resources/gcp-credentials.json}:/app/gcp-credentials.json:ro
 
 volumes:
   postgres_data:
