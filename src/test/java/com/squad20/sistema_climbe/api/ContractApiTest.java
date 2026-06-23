@@ -87,6 +87,15 @@ class ContractApiTest extends ApiTestBase {
     }
 
     @Test
+    @DisplayName("GET /view retorna 404 quando contrato não possui PDF")
+    void getViewReturns404WhenContractHasNoPdf() throws Exception {
+        ContractFixture contract = createContract();
+
+        mockMvc.perform(get(getBasePath() + "/" + contract.id() + "/view"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
     @DisplayName("Soft delete on contract hides the associated spreadsheet")
     void softDeleteCascadeHidesAssociatedSpreadsheet() throws Exception {
         ContractFixture contract = createContract();

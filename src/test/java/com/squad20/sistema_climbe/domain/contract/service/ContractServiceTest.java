@@ -9,6 +9,8 @@ import com.squad20.sistema_climbe.domain.proposal.entity.Proposal;
 import com.squad20.sistema_climbe.domain.user.entity.User;
 import com.squad20.sistema_climbe.domain.user.repository.UserRepository;
 import com.squad20.sistema_climbe.domain.notification.service.NotificationService;
+import com.squad20.sistema_climbe.exception.ResourceNotFoundException;
+import com.squad20.sistema_climbe.service.GoogleCloudStorageService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -19,6 +21,8 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.*;
@@ -31,6 +35,7 @@ class ContractServiceTest {
     @Mock private UserRepository userRepository;
     @Mock private NotificationService notificationService;
     @Mock private ContractMapper contractMapper;
+    @Mock private GoogleCloudStorageService googleCloudStorageService;
 
     @InjectMocks private ContractService service;
 
@@ -62,5 +67,40 @@ class ContractServiceTest {
 
         verify(contractTeamRepository).saveAll(anyList());
         verify(notificationService).save(any());
+    }
+
+    @Test
+    void generateViewUrlWithoutPdfThrowsNotFound() {
+        Contract contract = new Contract();
+        contract.setId(1L);
+
+        when(contractRepository.findById(1L)).thenReturn(Optional.of(contract));
+
+        assertThrows(ResourceNotFoundException.class, () -> service.generateViewUrl(1L));
+    }
+
+    @Test
+    void generateViewUrlWithExternalHttpUrlReturnsDirectly() {
+        Contract contract = new Contract();
+        contract.setId(1L);
+        contract.setPdfUrl("https://teste.com/contrato.pdf");
+
+        when(contractRepository.findById(1L)).thenReturn(Optional.of(contract));
+
+        assertEquals("https://teste.com/contrato.pdf", service.generateViewUrl(1L));
+        verify(googleCloudStorageService, never()).generateSignedUrl(any());
+    }
+
+    @Test
+    void generateViewUrlWithBucketPathReturnsSignedUrl() {
+        Contract contract = new Contract();
+        contract.setId(1L);
+        contract.setPdfUrl("contratos/contrato_1.pdf");
+
+        when(contractRepository.findById(1L)).thenReturn(Optional.of(contract));
+        when(googleCloudStorageService.generateSignedUrl("contratos/contrato_1.pdf"))
+                .thenReturn("https://storage.googleapis.com/signed-url");
+
+        assertEquals("https://storage.googleapis.com/signed-url", service.generateViewUrl(1L));
     }
 }
