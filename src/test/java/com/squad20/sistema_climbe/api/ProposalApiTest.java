@@ -214,6 +214,26 @@ class ProposalApiTest extends ApiTestBase {
     }
 
     @Test
+    @DisplayName("PATCH allows advancing from READY_FOR_NEXT_STAGE to COMPLETED")
+    void patchAllowsReadyForNextStageToCompleted() throws Exception {
+        ProposalFixture proposal = createApprovedCommercialProposal();
+
+        String contractId = createResource("/api/contracts",
+                "{\"proposalId\":" + proposal.id() + ",\"startDate\":\"2026-03-20\",\"endDate\":\"2026-12-20\",\"status\":\"PENDING_SIGNATURE\"}");
+
+        mockMvc.perform(patch("/api/contracts/" + contractId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"status\":\"DIGITALLY_SIGNED\"}"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(patch(getBasePath() + "/" + proposal.id())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"status\":\"COMPLETED\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("COMPLETED"));
+    }
+
+    @Test
     @DisplayName("GET by enterprise returns created proposals")
     void getByEnterpriseReturnsCreatedProposal() throws Exception {
         ProposalFixture proposal = createProposal();

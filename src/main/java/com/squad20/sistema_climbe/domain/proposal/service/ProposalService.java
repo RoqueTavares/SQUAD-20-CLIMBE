@@ -198,6 +198,8 @@ public class ProposalService {
             case COMMERCIAL_PROPOSAL_REJECTED -> newStatus == ProposalStatus.RECEIVED 
                     || newStatus == ProposalStatus.IN_TRIAGE 
                     || newStatus == ProposalStatus.COMMERCIAL_PROPOSAL;
+            case READY_FOR_NEXT_STAGE -> newStatus == ProposalStatus.COMPLETED;
+            case COMPLETED -> false;
             default -> false;
         };
 
