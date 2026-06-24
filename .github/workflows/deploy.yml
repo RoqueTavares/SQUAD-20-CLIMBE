@@ -51,11 +51,15 @@ jobs:
       - name: Verify deployment
         run: |
           URL="https://climbe-api-pionu2yewa-rj.a.run.app"
-          echo "Aguardando API inicializar..."
-          sleep 30
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL/actuator/health/readiness")
-          if [ "$STATUS" != "200" ]; then
-            echo "FALHA: readiness retornou HTTP $STATUS"
-            exit 1
-          fi
-          echo "Deploy validado — readiness UP"
+          echo "Aguardando API inicializar (cold start)..."
+          for i in $(seq 1 10); do
+            sleep 15
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL/actuator/health/readiness")
+            echo "Tentativa $i — HTTP $STATUS"
+            if [ "$STATUS" = "200" ]; then
+              echo "Deploy validado — readiness UP"
+              exit 0
+            fi
+          done
+          echo "FALHA: readiness não ficou UP após 150s"
+          exit 1
